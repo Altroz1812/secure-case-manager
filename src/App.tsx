@@ -12,6 +12,12 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
+// Admin Pages
+import ClientsPage from "./pages/admin/ClientsPage";
+import BranchesPage from "./pages/admin/BranchesPage";
+import UsersPage from "./pages/admin/UsersPage";
+import FieldExecutivesPage from "./pages/admin/FieldExecutivesPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -125,7 +131,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="Client Management" description="Manage verification clients" />
+                    <ClientsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -136,7 +142,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="Branch Management" description="Manage branches and PIN codes" />
+                    <BranchesPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -147,7 +153,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AppLayout>
-                    <PlaceholderPage title="User Management" description="Manage users and role assignments" />
+                    <UsersPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -158,7 +164,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="Field Executives" description="Manage FE profiles and assignments" />
+                    <FieldExecutivesPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
