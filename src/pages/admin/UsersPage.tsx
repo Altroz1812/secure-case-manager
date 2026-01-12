@@ -86,7 +86,7 @@ export default function UsersPage() {
 
   const handleRemoveRole = async (role: string) => {
     if (!editingUser) return;
-    await removeRole.mutateAsync({ userId: editingUser.user_id, role });
+    await removeRole.mutateAsync({ userId: editingUser.user_id, role: role as AppRole });
   };
 
   const handleAddBranch = async () => {
