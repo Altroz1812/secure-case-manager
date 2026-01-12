@@ -18,6 +18,12 @@ import BranchesPage from "./pages/admin/BranchesPage";
 import UsersPage from "./pages/admin/UsersPage";
 import FieldExecutivesPage from "./pages/admin/FieldExecutivesPage";
 
+// Intake Pages
+import EmailInboxPage from "./pages/intake/EmailInboxPage";
+import EmailDetailPage from "./pages/intake/EmailDetailPage";
+import LeadsListPage from "./pages/intake/LeadsListPage";
+import LeadFormPage from "./pages/intake/LeadFormPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
