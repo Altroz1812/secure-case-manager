@@ -9,9 +9,7 @@ import { FileText, Plus, Eye, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 const priorityColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-700',
   normal: 'bg-blue-100 text-blue-700',
-  high: 'bg-orange-100 text-orange-700',
   urgent: 'bg-red-100 text-red-700',
 };
 
@@ -118,10 +116,7 @@ export default function LeadsListPage() {
     return createdAt.toDateString() === today.toDateString();
   }).length || 0;
 
-  const urgentLeads = leads?.filter(l => {
-    const p = l.priority;
-    return p === 'urgent' || p === 'high';
-  }).length || 0;
+  const urgentLeads = leads?.filter(l => l.priority === 'urgent').length || 0;
 
   return (
     <div className="space-y-6">
@@ -158,7 +153,7 @@ export default function LeadsListPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">High/Urgent Priority</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Urgent Priority</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">{urgentLeads}</p>

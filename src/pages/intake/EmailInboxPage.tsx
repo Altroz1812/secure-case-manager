@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Paperclip, Eye, FileText, Plus } from 'lucide-react';
+import { Mail, Paperclip, Eye, FileText, Plus, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function EmailInboxPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'processed' | 'all'>('unprocessed');
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const filter = activeTab === 'all' ? undefined : { processed: activeTab === 'processed' };
-  const { data: emails, isLoading } = useEmails(filter);
+  const { data: emails, isLoading, refetch } = useEmails(filter);
   const { data: branches } = useBranches();
 
   const getBranchName = (branchId: string | null) => {
@@ -31,6 +34,26 @@ export default function EmailInboxPage() {
 
   const handleCreateLeadFromEmail = (email: EmailWithAttachments) => {
     navigate(`/leads/new?emailId=${email.id}`);
+  };
+
+  const handleSyncEmails = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('email-sync');
+
+      if (error) throw error;
+      
+      toast.success('Email sync completed', {
+        description: data?.message || 'Emails synced successfully'
+      });
+      refetch();
+    } catch (error: any) {
+      toast.error('Email sync failed', {
+        description: error.message
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const columns = [
@@ -121,9 +144,15 @@ export default function EmailInboxPage() {
           </h1>
           <p className="text-muted-foreground">Process verification request emails and create leads</p>
         </div>
-        <Button onClick={() => navigate('/leads/new')}>
-          <Plus className="h-4 w-4 mr-2" /> Create Lead Manually
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSyncEmails} disabled={isSyncing} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Emails'}
+          </Button>
+          <Button onClick={() => navigate('/leads/new')}>
+            <Plus className="h-4 w-4 mr-2" /> Create Lead Manually
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
