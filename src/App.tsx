@@ -67,7 +67,18 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'intake']}>
                   <AppLayout>
-                    <PlaceholderPage title="Email Inbox" description="Sync and manage verification request emails" />
+                    <EmailInboxPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/emails/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'intake']}>
+                  <AppLayout>
+                    <EmailDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -79,7 +90,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'intake', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="Leads" description="View and manage verification leads" />
+                    <LeadsListPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -90,7 +101,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'intake']}>
                   <AppLayout>
-                    <PlaceholderPage title="Create Lead" description="Create a new verification lead" />
+                    <LeadFormPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
