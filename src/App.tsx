@@ -24,6 +24,12 @@ import EmailDetailPage from "./pages/intake/EmailDetailPage";
 import LeadsListPage from "./pages/intake/LeadsListPage";
 import LeadFormPage from "./pages/intake/LeadFormPage";
 
+// Task Pages
+import TasksListPage from "./pages/tasks/TasksListPage";
+import MyTasksPage from "./pages/tasks/MyTasksPage";
+import TaskDetailPage from "./pages/tasks/TaskDetailPage";
+import QCReviewPage from "./pages/tasks/QCReviewPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -111,9 +117,20 @@ const App = () => (
             <Route
               path="/tasks"
               element={
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'qc']}>
+                  <AppLayout>
+                    <TasksListPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/tasks/:id"
+              element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <PlaceholderPage title="All Tasks" description="View all verification tasks" />
+                    <TaskDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -124,7 +141,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['analyst', 'field_executive']}>
                   <AppLayout>
-                    <PlaceholderPage title="My Tasks" description="Tasks assigned to you" />
+                    <MyTasksPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -136,7 +153,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'qc', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="QC Review" description="Review and approve completed verifications" />
+                    <QCReviewPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
