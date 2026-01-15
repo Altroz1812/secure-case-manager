@@ -53,7 +53,7 @@ export default function QCReviewPage() {
     qcReview.mutate(
       {
         taskId: selectedTask.id,
-        status: reviewAction === 'approve' ? 'qc_approved' : 'qc_rejected',
+        status: reviewAction === 'approve' ? 'approved' : 'rejected',
         qcRemarks,
         reviewedBy: user.id,
       },
