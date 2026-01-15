@@ -30,6 +30,12 @@ import MyTasksPage from "./pages/tasks/MyTasksPage";
 import TaskDetailPage from "./pages/tasks/TaskDetailPage";
 import QCReviewPage from "./pages/tasks/QCReviewPage";
 
+// Report Pages
+import VolumeReportPage from "./pages/reports/VolumeReportPage";
+import TATReportPage from "./pages/reports/TATReportPage";
+import ProductivityReportPage from "./pages/reports/ProductivityReportPage";
+import SLAReportPage from "./pages/reports/SLAReportPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -221,7 +227,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'client_viewer']}>
                   <AppLayout>
-                    <PlaceholderPage title="Volume Report" description="Client and branch-wise volume analytics" />
+                    <VolumeReportPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -232,7 +238,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'client_viewer']}>
                   <AppLayout>
-                    <PlaceholderPage title="TAT Report" description="Turnaround time analysis" />
+                    <TATReportPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -243,7 +249,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="FE Productivity" description="Field executive performance metrics" />
+                    <ProductivityReportPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -254,7 +260,7 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'client_viewer']}>
                   <AppLayout>
-                    <PlaceholderPage title="SLA Monitoring" description="SLA compliance and breach analysis" />
+                    <SLAReportPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
