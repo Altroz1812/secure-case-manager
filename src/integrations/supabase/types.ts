@@ -136,6 +136,53 @@ export type Database = {
           },
         ]
       }
+      client_report_configs: {
+        Row: {
+          client_id: string
+          config_name: string
+          created_at: string
+          field_mappings: Json | null
+          header_config: Json | null
+          id: string
+          is_active: boolean | null
+          report_type: string
+          template_config: Json
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          config_name: string
+          created_at?: string
+          field_mappings?: Json | null
+          header_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          report_type: string
+          template_config?: Json
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          config_name?: string
+          created_at?: string
+          field_mappings?: Json | null
+          header_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          report_type?: string
+          template_config?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_report_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           code: string
@@ -304,6 +351,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      generated_reports: {
+        Row: {
+          created_at: string
+          generated_at: string
+          generated_by: string
+          id: string
+          lead_id: string | null
+          report_data: Json
+          report_type: string
+          storage_path: string | null
+          task_id: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          generated_by: string
+          id?: string
+          lead_id?: string | null
+          report_data: Json
+          report_type: string
+          storage_path?: string | null
+          task_id?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          lead_id?: string | null
+          report_data?: Json
+          report_type?: string
+          storage_path?: string | null
+          task_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_reports_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_reports_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
