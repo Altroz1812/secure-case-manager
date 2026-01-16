@@ -35,6 +35,12 @@ import VolumeReportPage from "./pages/reports/VolumeReportPage";
 import TATReportPage from "./pages/reports/TATReportPage";
 import ProductivityReportPage from "./pages/reports/ProductivityReportPage";
 import SLAReportPage from "./pages/reports/SLAReportPage";
+import ReassignmentReportPage from "./pages/reports/ReassignmentReportPage";
+import AuditLogPage from "./pages/reports/AuditLogPage";
+import ReportHistoryPage from "./pages/reports/ReportHistoryPage";
+
+// Admin Pages (additional)
+import ReportConfigPage from "./pages/admin/ReportConfigPage";
 
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
