@@ -267,12 +267,12 @@ export default function ReportConfigPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4">
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
+            <Select value={selectedClient || "all"} onValueChange={(v) => setSelectedClient(v === "all" ? "" : v)}>
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="Filter by Client" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Clients</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {clients?.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.name}
