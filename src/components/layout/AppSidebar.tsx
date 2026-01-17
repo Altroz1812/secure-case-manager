@@ -13,7 +13,11 @@ import {
   Package,
   Bell,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
+  History,
+  FileSearch,
+  FileCode
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -105,6 +109,7 @@ const adminNavItems: NavItem[] = [
       { title: 'Users', url: '/admin/users', icon: Users },
       { title: 'Field Executives', url: '/admin/field-executives', icon: UserCheck },
       { title: 'Products', url: '/admin/products', icon: Package },
+      { title: 'Report Config', url: '/admin/report-config', icon: FileCode, roles: ['admin'] },
     ],
   },
 ];
@@ -120,6 +125,9 @@ const reportsNavItems: NavItem[] = [
       { title: 'TAT Report', url: '/reports/tat', icon: BarChart3 },
       { title: 'FE Productivity', url: '/reports/productivity', icon: BarChart3 },
       { title: 'SLA Monitoring', url: '/reports/sla', icon: BarChart3 },
+      { title: 'Reassignment', url: '/reports/reassignment', icon: RefreshCw },
+      { title: 'Audit Logs', url: '/reports/audit', icon: FileSearch },
+      { title: 'Report History', url: '/reports/history', icon: History },
     ],
   },
 ];

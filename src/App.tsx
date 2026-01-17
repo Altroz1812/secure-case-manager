@@ -272,6 +272,51 @@ const App = () => (
               }
             />
             
+            <Route
+              path="/reports/reassignment"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
+                  <AppLayout>
+                    <ReassignmentReportPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/reports/audit"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
+                  <AppLayout>
+                    <AuditLogPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/reports/history"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'client_viewer']}>
+                  <AppLayout>
+                    <ReportHistoryPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Admin - Report Configuration */}
+            <Route
+              path="/admin/report-config"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout>
+                    <ReportConfigPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Notifications & Settings */}
             <Route
               path="/notifications"
