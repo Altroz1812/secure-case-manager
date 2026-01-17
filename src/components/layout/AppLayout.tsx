@@ -4,9 +4,7 @@ import { AppSidebar } from './AppSidebar';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useLocation, Link } from 'react-router-dom';
-import { Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -31,6 +29,10 @@ const routeTitles: Record<string, string> = {
   '/reports/tat': 'TAT Report',
   '/reports/productivity': 'FE Productivity',
   '/reports/sla': 'SLA Monitoring',
+  '/reports/reassignment': 'Reassignment Report',
+  '/reports/audit': 'Audit Logs',
+  '/reports/history': 'Report History',
+  '/admin/report-config': 'Report Configuration',
   '/notifications': 'Notifications',
   '/settings': 'Settings',
 };
@@ -89,17 +91,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </Breadcrumb>
           
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative" asChild>
-              <Link to="/notifications">
-                <Bell className="h-5 w-5" />
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  3
-                </Badge>
-              </Link>
-            </Button>
+            <NotificationBell />
           </div>
         </header>
         
