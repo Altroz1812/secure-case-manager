@@ -502,6 +502,171 @@ export type Database = {
           },
         ]
       }
+      message_queue: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          external_message_id: string | null
+          id: string
+          max_retries: number | null
+          notification_id: string | null
+          payload: Json
+          recipient_email: string | null
+          recipient_phone: string | null
+          recipient_user_id: string
+          retry_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          max_retries?: number | null
+          notification_id?: string | null
+          payload?: Json
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          recipient_user_id: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          max_retries?: number | null
+          notification_id?: string | null
+          payload?: Json
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          recipient_user_id?: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_queue_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          daily_digest_enabled: boolean | null
+          email_enabled: boolean | null
+          id: string
+          in_app_enabled: boolean | null
+          qc_result_enabled: boolean | null
+          reassignment_enabled: boolean | null
+          sla_warning_enabled: boolean | null
+          sms_enabled: boolean | null
+          task_assignment_enabled: boolean | null
+          updated_at: string
+          user_id: string
+          whatsapp_enabled: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          daily_digest_enabled?: boolean | null
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          qc_result_enabled?: boolean | null
+          reassignment_enabled?: boolean | null
+          sla_warning_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          task_assignment_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+          whatsapp_enabled?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          daily_digest_enabled?: boolean | null
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          qc_result_enabled?: boolean | null
+          reassignment_enabled?: boolean | null
+          sla_warning_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          task_assignment_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_enabled?: boolean | null
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          body_template: string
+          channel: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          subject: string | null
+          template_code: string | null
+          template_name: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          body_template: string
+          channel: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          subject?: string | null
+          template_code?: string | null
+          template_name: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          body_template?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          subject?: string | null
+          template_code?: string | null
+          template_name?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null

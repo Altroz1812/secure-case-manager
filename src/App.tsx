@@ -42,6 +42,10 @@ import ReportHistoryPage from "./pages/reports/ReportHistoryPage";
 // Admin Pages (additional)
 import ReportConfigPage from "./pages/admin/ReportConfigPage";
 
+// Notifications & Settings Pages
+import NotificationsPage from "./pages/NotificationsPage";
+import SettingsPage from "./pages/SettingsPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -323,7 +327,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <PlaceholderPage title="Notifications" description="View your notifications" />
+                    <NotificationsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -334,7 +338,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <PlaceholderPage title="Settings" description="Manage your account settings" />
+                    <SettingsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
