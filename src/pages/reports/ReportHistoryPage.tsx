@@ -5,15 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
-import { CalendarIcon, Download, FileText, Eye, History } from 'lucide-react';
+import { CalendarIcon, Download, FileText, Eye, History, Loader2, FileDown, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAllReports } from '@/hooks/useGeneratedReports';
+import { useAllReports, ReportWithDetails } from '@/hooks/useGeneratedReports';
 import { getDefaultDateRange, DateRange } from '@/hooks/useReports';
+import { usePdfGeneration } from '@/hooks/usePdfGeneration';
 
 export default function ReportHistoryPage() {
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<string>('');
+  const [previewReport, setPreviewReport] = useState<ReportWithDetails | null>(null);
+
+  const { generatePdf, downloadAsHtml, isGenerating } = usePdfGeneration();
 
   const { data: reports, isLoading } = useAllReports({
     reportType: reportType || undefined,
@@ -118,12 +125,15 @@ export default function ReportHistoryPage() {
               </PopoverContent>
             </Popover>
 
-            <Select value={reportType} onValueChange={setReportType}>
+            <Select 
+              value={reportType || "all"} 
+              onValueChange={(value) => setReportType(value === "all" ? "" : value)}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="All Report Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="task_verification">Task Verification</SelectItem>
                 <SelectItem value="lead_consolidated">Lead Consolidated</SelectItem>
               </SelectContent>
@@ -187,16 +197,44 @@ export default function ReportHistoryPage() {
                       <td className="py-3 px-4 whitespace-nowrap">
                         {format(new Date(report.generated_at), 'MMM dd, yyyy HH:mm')}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setPreviewReport(report)}
+                              title="Preview report data"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  disabled={isGenerating}
+                                  title="Download options"
+                                >
+                                  {isGenerating ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Download className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => generatePdf(report.id)}>
+                                  <Printer className="h-4 w-4 mr-2" />
+                                  Print / Save as PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => downloadAsHtml(report.id)}>
+                                  <FileDown className="h-4 w-4 mr-2" />
+                                  Download HTML
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
                     </tr>
                   ))}
                 </tbody>
@@ -213,6 +251,73 @@ export default function ReportHistoryPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewReport} onOpenChange={(open) => !open && setPreviewReport(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Report Preview
+            </DialogTitle>
+            <DialogDescription>
+              {previewReport?.report_type === 'task_verification' ? 'Task Verification' : 'Lead Consolidated'} Report 
+              - Version {previewReport?.version}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-4 pr-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Report ID:</span>
+                  <p className="font-mono">{previewReport?.id}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Reference:</span>
+                  <p className="font-medium">{previewReport?.task?.task_number || previewReport?.lead?.lead_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Generated By:</span>
+                  <p>{previewReport?.generated_by_user?.full_name || 'Unknown'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Generated At:</span>
+                  <p>{previewReport?.generated_at ? format(new Date(previewReport.generated_at), 'MMM dd, yyyy HH:mm') : 'N/A'}</p>
+                </div>
+              </div>
+              
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-2">Report Data</h4>
+                <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap">
+                  {JSON.stringify(previewReport?.report_data, null, 2)}
+                </pre>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => previewReport && downloadAsHtml(previewReport.id)}
+                  disabled={isGenerating}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Download HTML
+                </Button>
+                <Button
+                  onClick={() => previewReport && generatePdf(previewReport.id)}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Printer className="h-4 w-4 mr-2" />
+                  )}
+                  Print / Save as PDF
+                </Button>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
