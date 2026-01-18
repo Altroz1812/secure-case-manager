@@ -17,7 +17,8 @@ import {
   RefreshCw,
   History,
   FileSearch,
-  FileCode
+  FileCode,
+  ShieldCheck
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -109,6 +110,7 @@ const adminNavItems: NavItem[] = [
       { title: 'Users', url: '/admin/users', icon: Users },
       { title: 'Field Executives', url: '/admin/field-executives', icon: UserCheck },
       { title: 'Products', url: '/admin/products', icon: Package },
+      { title: 'Verification Types', url: '/admin/verification-types', icon: ShieldCheck, roles: ['admin'] },
       { title: 'Report Config', url: '/admin/report-config', icon: FileCode, roles: ['admin'] },
     ],
   },
