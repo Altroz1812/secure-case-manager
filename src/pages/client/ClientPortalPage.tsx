@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useClientPortalTasks, useClientPortalStats, useClientPortalReports } from '@/hooks/useClientPortal';
+import { useClientPortalTasks, useClientPortalStats, useClientPortalReports, ClientPortalTask } from '@/hooks/useClientPortal';
+import { LeadDetailDialog } from '@/components/client/LeadDetailDialog';
 import { format } from 'date-fns';
-import { FileText, ClipboardList, CheckCircle, XCircle, Clock, AlertTriangle, Download, Building } from 'lucide-react';
+import { FileText, ClipboardList, CheckCircle, XCircle, Clock, AlertTriangle, Download, Building, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function TaskStatusBadge({ status }: { status: string }) {
@@ -29,6 +31,9 @@ function TaskStatusBadge({ status }: { status: string }) {
 }
 
 export default function ClientPortalPage() {
+  const [selectedTask, setSelectedTask] = useState<ClientPortalTask | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
   const { data: tasks, isLoading: tasksLoading } = useClientPortalTasks();
   const { stats, isLoading: statsLoading } = useClientPortalStats();
   const { data: reports, isLoading: reportsLoading } = useClientPortalReports();
@@ -38,6 +43,10 @@ export default function ClientPortalPage() {
   // Get unique client names from tasks
   const clientNames = tasks ? [...new Set(tasks.map(t => t.lead.client.name))] : [];
 
+  const handleViewLead = (task: ClientPortalTask) => {
+    setSelectedTask(task);
+    setDialogOpen(true);
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -147,6 +156,7 @@ export default function ClientPortalPage() {
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>SLA Deadline</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -165,7 +175,7 @@ export default function ClientPortalPage() {
                         </TableCell>
                         <TableCell>{format(new Date(task.created_at), 'MMM dd, yyyy')}</TableCell>
                         <TableCell>
-                          {task.sla_deadline ? (
+                            {task.sla_deadline ? (
                             <span className={task.is_overdue ? 'text-red-500 font-medium' : ''}>
                               {format(new Date(task.sla_deadline), 'MMM dd, yyyy HH:mm')}
                               {task.is_overdue && ' (Overdue)'}
@@ -173,6 +183,16 @@ export default function ClientPortalPage() {
                           ) : (
                             '-'
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewLead(task)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -243,12 +263,18 @@ export default function ClientPortalPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No reports found for your organization
-                </div>
+              </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <LeadDetailDialog
+        task={selectedTask}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }

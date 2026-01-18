@@ -136,6 +136,53 @@ export type Database = {
           },
         ]
       }
+      client_documents: {
+        Row: {
+          created_at: string
+          document_type: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          lead_id: string
+          remarks: string | null
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          lead_id: string
+          remarks?: string | null
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          lead_id?: string
+          remarks?: string | null
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_report_configs: {
         Row: {
           client_id: string

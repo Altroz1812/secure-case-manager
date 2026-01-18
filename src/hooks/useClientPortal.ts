@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -31,6 +31,19 @@ export interface ClientPortalStats {
   approvedTasks: number;
   rejectedTasks: number;
   overduePercentage: number;
+}
+
+export interface ClientDocument {
+  id: string;
+  lead_id: string;
+  uploaded_by: string;
+  file_name: string;
+  file_type: string | null;
+  file_size: number | null;
+  storage_path: string;
+  document_type: string | null;
+  remarks: string | null;
+  created_at: string;
 }
 
 export function useClientPortalTasks() {
@@ -136,5 +149,77 @@ export function useClientPortalReports() {
       return data;
     },
     enabled: !!user,
+  });
+}
+
+export function useClientLeadDocuments(leadId: string | undefined) {
+  return useQuery({
+    queryKey: ['client-lead-documents', leadId],
+    queryFn: async () => {
+      if (!leadId) return [];
+
+      const { data, error } = await supabase
+        .from('client_documents')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as ClientDocument[];
+    },
+    enabled: !!leadId,
+  });
+}
+
+export function useUploadClientDocument() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      leadId,
+      file,
+      documentType,
+      remarks,
+    }: {
+      leadId: string;
+      file: File;
+      documentType: string;
+      remarks?: string;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${leadId}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('client-documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Create record in client_documents table
+      const { data, error } = await supabase
+        .from('client_documents')
+        .insert({
+          lead_id: leadId,
+          uploaded_by: user.id,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+          storage_path: fileName,
+          document_type: documentType,
+          remarks: remarks || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['client-lead-documents', variables.leadId] });
+    },
   });
 }
