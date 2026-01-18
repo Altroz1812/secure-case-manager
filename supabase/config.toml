@@ -31,3 +31,9 @@ enable_confirmations = false
 
 [functions.email-sync]
 verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.generate-pdf-report]
+verify_jwt = false
