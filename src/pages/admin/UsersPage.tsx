@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/components/admin/DataTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
+import { AddUserDialog } from '@/components/admin/AddUserDialog';
 import { useUsers, useUpdateProfile, useAssignRole, useRemoveRole, useAssignBranch, useRemoveBranch, type UserWithDetails } from '@/hooks/useUsers';
 import { useBranches } from '@/hooks/useBranches';
 
@@ -176,15 +177,18 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-        <p className="text-muted-foreground">Manage users, roles, and branch assignments</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+          <p className="text-muted-foreground">Manage users, roles, and branch assignments</p>
+        </div>
+        <AddUserDialog branches={branches} />
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
-          <CardDescription>Users are created when they sign up. You can assign roles and branches here.</CardDescription>
+          <CardDescription>View and manage all users in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           <DataTable
