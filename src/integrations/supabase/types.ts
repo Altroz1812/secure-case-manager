@@ -183,6 +183,35 @@ export type Database = {
           },
         ]
       }
+      client_user_assignments: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_user_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           code: string
@@ -1026,6 +1055,7 @@ export type Database = {
       generate_lead_number: { Args: never; Returns: string }
       generate_task_number: { Args: never; Returns: string }
       get_user_branches: { Args: { _user_id: string }; Returns: string[] }
+      get_user_clients: { Args: { _user_id: string }; Returns: string[] }
       get_user_primary_branch: { Args: { _user_id: string }; Returns: string }
       has_any_role: {
         Args: {
@@ -1036,6 +1066,10 @@ export type Database = {
       }
       has_branch_access: {
         Args: { _branch_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_client_access: {
+        Args: { _client_id: string; _user_id: string }
         Returns: boolean
       }
       has_role: {

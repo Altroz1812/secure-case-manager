@@ -18,7 +18,8 @@ import {
   History,
   FileSearch,
   FileCode,
-  ShieldCheck
+  ShieldCheck,
+  Building
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -68,6 +69,12 @@ const mainNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: 'Client Portal',
+    url: '/client-portal',
+    icon: Building,
+    roles: ['client_viewer'],
+  },
+  {
     title: 'Email Inbox',
     url: '/emails',
     icon: Mail,
@@ -83,6 +90,7 @@ const mainNavItems: NavItem[] = [
     title: 'Tasks',
     url: '/tasks',
     icon: ClipboardList,
+    roles: ['admin', 'ops_manager', 'qc', 'analyst', 'field_executive'],
   },
   {
     title: 'My Tasks',

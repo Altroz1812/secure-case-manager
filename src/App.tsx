@@ -48,6 +48,9 @@ import ReportConfigPage from "./pages/admin/ReportConfigPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import SettingsPage from "./pages/SettingsPage";
 
+// Client Portal
+import ClientPortalPage from "./pages/client/ClientPortalPage";
+
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -329,6 +332,18 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AppLayout>
                     <ReportConfigPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Client Portal */}
+            <Route
+              path="/client-portal"
+              element={
+                <ProtectedRoute allowedRoles={['client_viewer']}>
+                  <AppLayout>
+                    <ClientPortalPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
