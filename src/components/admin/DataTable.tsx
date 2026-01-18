@@ -22,7 +22,7 @@ interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   searchPlaceholder?: string;
-  searchKeys?: (keyof T)[];
+  searchKeys?: string[];
   isLoading?: boolean;
   onRowClick?: (item: T) => void;
   pageSize?: number;
@@ -40,23 +40,6 @@ export function DataTable<T extends { id: string }>({
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredData = data.filter(item => {
-    if (!search || searchKeys.length === 0) return true;
-    return searchKeys.some(key => {
-      const value = item[key];
-      if (typeof value === 'string') {
-        return value.toLowerCase().includes(search.toLowerCase());
-      }
-      return false;
-    });
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   const getValue = (item: T, key: string): unknown => {
     const keys = key.split('.');
     let value: unknown = item;
@@ -69,6 +52,23 @@ export function DataTable<T extends { id: string }>({
     }
     return value;
   };
+
+  const filteredData = data.filter(item => {
+    if (!search || searchKeys.length === 0) return true;
+    return searchKeys.some(key => {
+      const value = getValue(item, key);
+      if (typeof value === 'string') {
+        return value.toLowerCase().includes(search.toLowerCase());
+      }
+      return false;
+    });
+  });
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div className="space-y-4">
