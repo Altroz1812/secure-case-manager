@@ -18,6 +18,7 @@ import BranchesPage from "./pages/admin/BranchesPage";
 import UsersPage from "./pages/admin/UsersPage";
 import FieldExecutivesPage from "./pages/admin/FieldExecutivesPage";
 import ProductsPage from "./pages/admin/ProductsPage";
+import VerificationTypeConfigPage from "./pages/admin/VerificationTypeConfigPage";
 
 // Intake Pages
 import EmailInboxPage from "./pages/intake/EmailInboxPage";
@@ -227,6 +228,17 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
                     <ProductsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/verification-types"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout>
+                    <VerificationTypeConfigPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
