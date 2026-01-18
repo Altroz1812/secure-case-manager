@@ -143,7 +143,7 @@ const App = () => (
             <Route
               path="/tasks"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'qc']}>
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager', 'qc', 'analyst', 'field_executive']}>
                   <AppLayout>
                     <TasksListPage />
                   </AppLayout>
