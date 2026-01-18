@@ -17,6 +17,7 @@ import ClientsPage from "./pages/admin/ClientsPage";
 import BranchesPage from "./pages/admin/BranchesPage";
 import UsersPage from "./pages/admin/UsersPage";
 import FieldExecutivesPage from "./pages/admin/FieldExecutivesPage";
+import ProductsPage from "./pages/admin/ProductsPage";
 
 // Intake Pages
 import EmailInboxPage from "./pages/intake/EmailInboxPage";
@@ -223,9 +224,9 @@ const App = () => (
             <Route
               path="/admin/products"
               element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
                   <AppLayout>
-                    <PlaceholderPage title="Products" description="Manage business products" />
+                    <ProductsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
