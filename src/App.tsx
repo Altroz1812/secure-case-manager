@@ -19,6 +19,7 @@ import UsersPage from "./pages/admin/UsersPage";
 import FieldExecutivesPage from "./pages/admin/FieldExecutivesPage";
 import ProductsPage from "./pages/admin/ProductsPage";
 import VerificationTypeConfigPage from "./pages/admin/VerificationTypeConfigPage";
+import ClientUserAssignmentsPage from "./pages/admin/ClientUserAssignmentsPage";
 
 // Intake Pages
 import EmailInboxPage from "./pages/intake/EmailInboxPage";
@@ -242,6 +243,17 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AppLayout>
                     <VerificationTypeConfigPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/client-assignments"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout>
+                    <ClientUserAssignmentsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
