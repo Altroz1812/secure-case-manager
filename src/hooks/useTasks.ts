@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
+import { useAuth } from './useAuth';
 import type { Tables, TablesInsert, TablesUpdate, Enums } from '@/integrations/supabase/types';
 
 type Task = Tables<'tasks'>;
@@ -28,6 +30,31 @@ export function useTasks(filters?: {
   assignedTo?: string;
   isOverdue?: boolean;
 }) {
+  const queryClient = useQueryClient();
+
+  // Subscribe to realtime task changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+        },
+        () => {
+          // Invalidate tasks query on any change
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: async () => {
@@ -134,10 +161,38 @@ export function useTask(id: string | undefined) {
 }
 
 export function useMyTasks() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Subscribe to realtime changes for my tasks
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('my-tasks-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `assigned_to=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
   return useQuery({
     queryKey: ['my-tasks'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
       if (!user) throw new Error('Not authenticated');
 
       const { data: tasks, error } = await supabase
