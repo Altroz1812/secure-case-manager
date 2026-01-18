@@ -37,7 +37,7 @@ export function useNotifications() {
     enabled: !!user?.id,
   });
 
-  // Subscribe to real-time notifications
+  // Subscribe to real-time notifications (INSERT and UPDATE events)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -64,6 +64,19 @@ export function useNotifications() {
           });
 
           // Refetch notifications
+          queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refetch on updates (e.g., marking as read)
           queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
         }
       )
