@@ -46,6 +46,7 @@ import ReportHistoryPage from "./pages/reports/ReportHistoryPage";
 
 // Admin Pages (additional)
 import ReportConfigPage from "./pages/admin/ReportConfigPage";
+import ScreenPermissionsPage from "./pages/admin/ScreenPermissionsPage";
 
 // Notifications & Settings Pages
 import NotificationsPage from "./pages/NotificationsPage";
@@ -348,6 +349,18 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AppLayout>
                     <ReportConfigPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Admin - Screen Permissions */}
+            <Route
+              path="/admin/screen-permissions"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout>
+                    <ScreenPermissionsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
