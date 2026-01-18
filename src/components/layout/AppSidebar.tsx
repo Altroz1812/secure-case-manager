@@ -20,7 +20,8 @@ import {
   FileCode,
   ShieldCheck,
   Building,
-  UserPlus
+  UserPlus,
+  Lock
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -121,6 +122,7 @@ const adminNavItems: NavItem[] = [
       { title: 'Products', url: '/admin/products', icon: Package },
       { title: 'Verification Types', url: '/admin/verification-types', icon: ShieldCheck, roles: ['admin'] },
       { title: 'Client Assignments', url: '/admin/client-assignments', icon: UserPlus, roles: ['admin'] },
+      { title: 'Screen Permissions', url: '/admin/screen-permissions', icon: Lock, roles: ['admin'] },
       { title: 'Report Config', url: '/admin/report-config', icon: FileCode, roles: ['admin'] },
     ],
   },
