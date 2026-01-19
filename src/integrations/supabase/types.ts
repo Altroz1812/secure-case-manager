@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      applicant_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          address_type: Database["public"]["Enums"]["address_type"]
+          applicant_id: string
+          city: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          landmark: string | null
+          latitude: number | null
+          longitude: number | null
+          ownership_type: string | null
+          pincode: string
+          state: string
+          updated_at: string
+          years_at_address: number | null
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          address_type?: Database["public"]["Enums"]["address_type"]
+          applicant_id: string
+          city: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          landmark?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          ownership_type?: string | null
+          pincode: string
+          state: string
+          updated_at?: string
+          years_at_address?: number | null
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          address_type?: Database["public"]["Enums"]["address_type"]
+          applicant_id?: string
+          city?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          landmark?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          ownership_type?: string | null
+          pincode?: string
+          state?: string
+          updated_at?: string
+          years_at_address?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applicant_addresses_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "lead_applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      applicant_documents: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          document_number: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_verified: boolean | null
+          storage_path: string
+          uploaded_by: string
+          verification_remarks: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          document_number?: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_verified?: boolean | null
+          storage_path: string
+          uploaded_by: string
+          verification_remarks?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          document_number?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_verified?: boolean | null
+          storage_path?: string
+          uploaded_by?: string
+          verification_remarks?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applicant_documents_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "lead_applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -520,6 +644,71 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_applicants: {
+        Row: {
+          aadhar_number: string | null
+          applicant_type: Database["public"]["Enums"]["applicant_type"]
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          employer_name: string | null
+          id: string
+          is_primary: boolean
+          lead_id: string
+          monthly_income: number | null
+          name: string
+          occupation: string | null
+          pan_number: string | null
+          phone: string | null
+          relation_to_primary: string | null
+          updated_at: string
+        }
+        Insert: {
+          aadhar_number?: string | null
+          applicant_type?: Database["public"]["Enums"]["applicant_type"]
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          employer_name?: string | null
+          id?: string
+          is_primary?: boolean
+          lead_id: string
+          monthly_income?: number | null
+          name: string
+          occupation?: string | null
+          pan_number?: string | null
+          phone?: string | null
+          relation_to_primary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aadhar_number?: string | null
+          applicant_type?: Database["public"]["Enums"]["applicant_type"]
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          employer_name?: string | null
+          id?: string
+          is_primary?: boolean
+          lead_id?: string
+          monthly_income?: number | null
+          name?: string
+          occupation?: string | null
+          pan_number?: string | null
+          phone?: string | null
+          relation_to_primary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_applicants_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -1278,6 +1467,7 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
+      address_type: "residence" | "office" | "permanent" | "correspondence"
       app_role:
         | "admin"
         | "intake"
@@ -1286,6 +1476,23 @@ export type Database = {
         | "qc"
         | "ops_manager"
         | "client_viewer"
+      applicant_type: "primary" | "co_applicant" | "guarantor"
+      document_type:
+        | "pan"
+        | "aadhar"
+        | "passport"
+        | "voter_id"
+        | "driving_license"
+        | "bank_statement"
+        | "itr"
+        | "salary_slip"
+        | "form_16"
+        | "property_docs"
+        | "business_registration"
+        | "gst_certificate"
+        | "utility_bill"
+        | "rent_agreement"
+        | "other"
       fe_skill: "residential" | "business" | "end_use"
       priority_level: "normal" | "urgent"
       task_status:
@@ -1432,6 +1639,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      address_type: ["residence", "office", "permanent", "correspondence"],
       app_role: [
         "admin",
         "intake",
@@ -1440,6 +1648,24 @@ export const Constants = {
         "qc",
         "ops_manager",
         "client_viewer",
+      ],
+      applicant_type: ["primary", "co_applicant", "guarantor"],
+      document_type: [
+        "pan",
+        "aadhar",
+        "passport",
+        "voter_id",
+        "driving_license",
+        "bank_statement",
+        "itr",
+        "salary_slip",
+        "form_16",
+        "property_docs",
+        "business_registration",
+        "gst_certificate",
+        "utility_bill",
+        "rent_agreement",
+        "other",
       ],
       fe_skill: ["residential", "business", "end_use"],
       priority_level: ["normal", "urgent"],
