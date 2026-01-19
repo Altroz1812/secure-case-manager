@@ -9,14 +9,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Search, 
   User, 
   MapPin, 
   Briefcase,
   Check,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert,
+  Zap
 } from 'lucide-react';
 
 interface TaskAssignmentDialogProps {
@@ -25,16 +27,25 @@ interface TaskAssignmentDialogProps {
 }
 
 export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProps) {
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const { data: fieldExecutives, isLoading } = useFieldExecutives();
   const assignTask = useAssignTask();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFE, setSelectedFE] = useState<FieldExecutiveWithProfile | null>(null);
   const [reason, setReason] = useState('');
-  const [isOverride, setIsOverride] = useState(false);
+  const [reasonError, setReasonError] = useState('');
 
-  // Filter FEs based on pincode match and search query
+  // Check if this is a reassignment (task already has an assignee)
+  const isReassignment = !!task?.assigned_to;
+  
+  // Only admin, qc, ops_manager can reassign
+  const canReassign = hasAnyRole(['admin', 'qc', 'ops_manager']);
+  
+  // Block reassignment if user doesn't have permission
+  const isReassignmentBlocked = isReassignment && !canReassign;
+
+  // Filter FEs based on pincode match, skill match, and search query
   const filteredFEs = useMemo(() => {
     if (!fieldExecutives) return [];
     
@@ -50,49 +61,89 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
       );
     }
 
-    // Sort by pincode match
+    // Sort by pincode match, skill match, then workload
     const taskPincode = task?.lead?.pincode;
-    if (taskPincode) {
-      filtered = filtered.sort((a, b) => {
-        const aMatch = a.mapped_pincodes?.includes(taskPincode) ? 1 : 0;
-        const bMatch = b.mapped_pincodes?.includes(taskPincode) ? 1 : 0;
-        if (aMatch !== bMatch) return bMatch - aMatch;
-        
-        // Then sort by workload (ascending)
-        return (a.current_workload || 0) - (b.current_workload || 0);
-      });
-    }
+    const taskVerificationType = task?.verification_type;
+    
+    // Map verification type to skill
+    const requiredSkill = taskVerificationType === 'residential' ? 'residential' 
+      : taskVerificationType === 'business' ? 'business'
+      : taskVerificationType === 'end_use' ? 'end_use'
+      : null;
+
+    filtered = filtered.sort((a, b) => {
+      // Pincode match priority
+      const aPincodeMatch = taskPincode && a.mapped_pincodes?.includes(taskPincode) ? 1 : 0;
+      const bPincodeMatch = taskPincode && b.mapped_pincodes?.includes(taskPincode) ? 1 : 0;
+      if (aPincodeMatch !== bPincodeMatch) return bPincodeMatch - aPincodeMatch;
+      
+      // Skill match priority
+      const aSkillMatch = requiredSkill && a.skills?.includes(requiredSkill) ? 1 : 0;
+      const bSkillMatch = requiredSkill && b.skills?.includes(requiredSkill) ? 1 : 0;
+      if (aSkillMatch !== bSkillMatch) return bSkillMatch - aSkillMatch;
+      
+      // Then sort by workload (ascending)
+      return (a.current_workload || 0) - (b.current_workload || 0);
+    });
 
     return filtered;
-  }, [fieldExecutives, searchQuery, task?.lead?.pincode]);
+  }, [fieldExecutives, searchQuery, task?.lead?.pincode, task?.verification_type]);
 
   const handleAssign = async () => {
     if (!task || !selectedFE || !user) return;
+
+    // Validate mandatory reason for reassignment
+    if (isReassignment && !reason.trim()) {
+      setReasonError('Reason is required for reassignments');
+      return;
+    }
+
+    setReasonError('');
 
     await assignTask.mutateAsync({
       taskId: task.id,
       assignedTo: selectedFE.user_id,
       assignedBy: user.id,
-      reason: reason || undefined,
-      isOverride,
+      reason: reason.trim() || undefined,
+      isOverride: isReassignment,
       previousAssignee: task.assigned_to || undefined,
     });
 
     onClose();
     setSelectedFE(null);
     setReason('');
-    setIsOverride(false);
+    setReasonError('');
   };
 
   const taskPincode = task?.lead?.pincode;
+  const taskVerificationType = task?.verification_type;
+  const requiredSkill = taskVerificationType === 'residential' ? 'residential' 
+    : taskVerificationType === 'business' ? 'business'
+    : taskVerificationType === 'end_use' ? 'end_use'
+    : null;
 
   return (
     <Dialog open={!!task} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Assign Task</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {isReassignment ? (
+              <>
+                <ShieldAlert className="h-5 w-5 text-amber-500" />
+                Reassign Task
+              </>
+            ) : (
+              <>
+                <Zap className="h-5 w-5 text-primary" />
+                Assign Task
+              </>
+            )}
+          </DialogTitle>
           <DialogDescription>
-            Select a field executive to assign {task?.task_number}
+            {isReassignment 
+              ? `Reassigning ${task?.task_number} from ${task?.assigned_user?.full_name || 'current assignee'}`
+              : `Select a field executive to assign ${task?.task_number}`
+            }
             {task?.lead?.address && (
               <span className="block mt-1 text-sm">
                 <MapPin className="h-3 w-3 inline mr-1" />
@@ -101,6 +152,16 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
             )}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Reassignment blocked alert */}
+        {isReassignmentBlocked && (
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertDescription>
+              Only Admin, QC, or Operations Manager can reassign tasks. Contact your supervisor for assistance.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-4">
           {/* Search */}
@@ -111,6 +172,7 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
+              disabled={isReassignmentBlocked}
             />
           </div>
 
@@ -129,6 +191,7 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
               <div className="p-2 space-y-2">
                 {filteredFEs.map(fe => {
                   const isPincodeMatch = taskPincode && fe.mapped_pincodes?.includes(taskPincode);
+                  const isSkillMatch = requiredSkill && fe.skills?.includes(requiredSkill);
                   const isOverloaded = (fe.current_workload || 0) >= (fe.max_workload || 10);
                   const isSelected = selectedFE?.id === fe.id;
 
@@ -139,8 +202,8 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
                         isSelected 
                           ? 'border-primary bg-primary/5' 
                           : 'hover:bg-muted/50'
-                      } ${isOverloaded ? 'opacity-60' : ''}`}
-                      onClick={() => !isOverloaded && setSelectedFE(fe)}
+                      } ${isOverloaded || isReassignmentBlocked ? 'opacity-60' : ''}`}
+                      onClick={() => !isOverloaded && !isReassignmentBlocked && setSelectedFE(fe)}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-start justify-between">
@@ -158,9 +221,13 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
                               <p className="font-medium">{fe.profile?.full_name || 'Unknown'}</p>
                               <p className="text-sm text-muted-foreground">{fe.employee_code}</p>
                               {fe.skills && fe.skills.length > 0 && (
-                                <div className="flex gap-1 mt-1">
-                                  {fe.skills.slice(0, 3).map(skill => (
-                                    <Badge key={skill} variant="secondary" className="text-xs">
+                                <div className="flex gap-1 mt-1 flex-wrap">
+                                  {fe.skills.map(skill => (
+                                    <Badge 
+                                      key={skill} 
+                                      variant={skill === requiredSkill ? "default" : "secondary"} 
+                                      className="text-xs"
+                                    >
                                       {skill}
                                     </Badge>
                                   ))}
@@ -169,7 +236,7 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
                             </div>
                           </div>
 
-                          <div className="text-right">
+                          <div className="text-right space-y-1">
                             <div className="flex items-center gap-2">
                               <Briefcase className="h-4 w-4 text-muted-foreground" />
                               <span className={`text-sm ${isOverloaded ? 'text-destructive' : ''}`}>
@@ -177,13 +244,19 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
                               </span>
                             </div>
                             {isPincodeMatch && (
-                              <Badge className="mt-1 bg-green-100 text-green-700">
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                                 <MapPin className="h-3 w-3 mr-1" />
-                                Pincode Match
+                                Pincode
+                              </Badge>
+                            )}
+                            {isSkillMatch && (
+                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                <Check className="h-3 w-3 mr-1" />
+                                Skill
                               </Badge>
                             )}
                             {isOverloaded && (
-                              <Badge variant="destructive" className="mt-1">
+                              <Badge variant="destructive">
                                 <AlertCircle className="h-3 w-3 mr-1" />
                                 At Capacity
                               </Badge>
@@ -205,25 +278,28 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
             )}
           </ScrollArea>
 
-          {/* Reason (for reassignment) */}
-          {task?.assigned_to && (
+          {/* Mandatory reason for reassignment */}
+          {isReassignment && !isReassignmentBlocked && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="override" 
-                  checked={isOverride}
-                  onCheckedChange={(checked) => setIsOverride(checked as boolean)}
-                />
-                <label htmlFor="override" className="text-sm">
-                  This is an override/reassignment
-                </label>
-              </div>
+              <Alert variant="default" className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  Reassignment requires a mandatory reason for audit trail.
+                </AlertDescription>
+              </Alert>
               <Textarea
-                placeholder="Reason for reassignment (optional)"
+                placeholder="Enter reason for reassignment (required)..."
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  if (e.target.value.trim()) setReasonError('');
+                }}
                 rows={2}
+                className={reasonError ? 'border-destructive' : ''}
               />
+              {reasonError && (
+                <p className="text-sm text-destructive">{reasonError}</p>
+              )}
             </div>
           )}
         </div>
@@ -232,9 +308,9 @@ export function TaskAssignmentDialog({ task, onClose }: TaskAssignmentDialogProp
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             onClick={handleAssign} 
-            disabled={!selectedFE || assignTask.isPending}
+            disabled={!selectedFE || assignTask.isPending || isReassignmentBlocked}
           >
-            {assignTask.isPending ? 'Assigning...' : 'Assign Task'}
+            {assignTask.isPending ? 'Assigning...' : isReassignment ? 'Reassign Task' : 'Assign Task'}
           </Button>
         </DialogFooter>
       </DialogContent>
