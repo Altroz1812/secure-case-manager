@@ -35,7 +35,7 @@ const leadFormSchema = z.object({
   loan_number: z.string().optional(),
   address: z.string().optional(),
   pincode: z.string().regex(/^\d{6}$/, 'Pincode must be 6 digits').optional().or(z.literal('')),
-  priority: z.enum(['low', 'normal', 'high', 'urgent'] as const),
+  priority: z.enum(['normal', 'urgent'] as const),
   verification_types: z.array(z.string()).min(1, 'Select at least one verification type'),
 });
 
