@@ -1058,6 +1058,42 @@ export type Database = {
         }
         Relationships: []
       }
+      observation_tags: {
+        Row: {
+          applicable_verification_types: Database["public"]["Enums"]["verification_type"][]
+          category: Database["public"]["Enums"]["observation_category"]
+          created_at: string
+          id: string
+          is_active: boolean | null
+          severity_weight: number | null
+          tag_code: string
+          tag_label: string
+          updated_at: string
+        }
+        Insert: {
+          applicable_verification_types?: Database["public"]["Enums"]["verification_type"][]
+          category: Database["public"]["Enums"]["observation_category"]
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          severity_weight?: number | null
+          tag_code: string
+          tag_label: string
+          updated_at?: string
+        }
+        Update: {
+          applicable_verification_types?: Database["public"]["Enums"]["verification_type"][]
+          category?: Database["public"]["Enums"]["observation_category"]
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          severity_weight?: number | null
+          tag_code?: string
+          tag_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           code: string
@@ -1121,6 +1157,39 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      remark_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          remark_type: Database["public"]["Enums"]["remark_type"]
+          requires_free_text: boolean | null
+          template_text: string
+          updated_at: string
+          verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          remark_type: Database["public"]["Enums"]["remark_type"]
+          requires_free_text?: boolean | null
+          template_text: string
+          updated_at?: string
+          verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          remark_type?: Database["public"]["Enums"]["remark_type"]
+          requires_free_text?: boolean | null
+          template_text?: string
+          updated_at?: string
+          verification_type?: Database["public"]["Enums"]["verification_type"]
         }
         Relationships: []
       }
@@ -1210,6 +1279,89 @@ export type Database = {
             foreignKeyName: "task_evidence_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_verification_data: {
+        Row: {
+          checklist_responses: Json
+          created_at: string
+          free_text_remark: string | null
+          id: string
+          observation_tag_ids: string[]
+          remark_template_id: string | null
+          remark_type: Database["public"]["Enums"]["remark_type"] | null
+          structured_remark: string | null
+          target_address_id: string | null
+          target_applicant_id: string | null
+          task_id: string
+          updated_at: string
+          verification_methods: Database["public"]["Enums"]["verification_method_type"][]
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          checklist_responses?: Json
+          created_at?: string
+          free_text_remark?: string | null
+          id?: string
+          observation_tag_ids?: string[]
+          remark_template_id?: string | null
+          remark_type?: Database["public"]["Enums"]["remark_type"] | null
+          structured_remark?: string | null
+          target_address_id?: string | null
+          target_applicant_id?: string | null
+          task_id: string
+          updated_at?: string
+          verification_methods?: Database["public"]["Enums"]["verification_method_type"][]
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          checklist_responses?: Json
+          created_at?: string
+          free_text_remark?: string | null
+          id?: string
+          observation_tag_ids?: string[]
+          remark_template_id?: string | null
+          remark_type?: Database["public"]["Enums"]["remark_type"] | null
+          structured_remark?: string | null
+          target_address_id?: string | null
+          target_applicant_id?: string | null
+          task_id?: string
+          updated_at?: string
+          verification_methods?: Database["public"]["Enums"]["verification_method_type"][]
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_verification_data_remark_template_id_fkey"
+            columns: ["remark_template_id"]
+            isOneToOne: false
+            referencedRelation: "remark_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_verification_data_target_address_id_fkey"
+            columns: ["target_address_id"]
+            isOneToOne: false
+            referencedRelation: "applicant_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_verification_data_target_applicant_id_fkey"
+            columns: ["target_applicant_id"]
+            isOneToOne: false
+            referencedRelation: "lead_applicants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_verification_data_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
@@ -1373,6 +1525,81 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_checklist_items: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          is_mandatory: boolean | null
+          item_code: string
+          item_description: string | null
+          item_label: string
+          updated_at: string
+          verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_mandatory?: boolean | null
+          item_code: string
+          item_description?: string | null
+          item_label: string
+          updated_at?: string
+          verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_mandatory?: boolean | null
+          item_code?: string
+          item_description?: string | null
+          item_label?: string
+          updated_at?: string
+          verification_type?: Database["public"]["Enums"]["verification_type"]
+        }
+        Relationships: []
+      }
+      verification_methods: {
+        Row: {
+          applicable_verification_types: Database["public"]["Enums"]["verification_type"][]
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          is_field_method: boolean | null
+          method_type: Database["public"]["Enums"]["verification_method_type"]
+          updated_at: string
+        }
+        Insert: {
+          applicable_verification_types?: Database["public"]["Enums"]["verification_type"][]
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          is_field_method?: boolean | null
+          method_type: Database["public"]["Enums"]["verification_method_type"]
+          updated_at?: string
+        }
+        Update: {
+          applicable_verification_types?: Database["public"]["Enums"]["verification_type"][]
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_field_method?: boolean | null
+          method_type?: Database["public"]["Enums"]["verification_method_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       verification_type_config: {
         Row: {
           created_at: string
@@ -1494,7 +1721,20 @@ export type Database = {
         | "rent_agreement"
         | "other"
       fe_skill: "residential" | "business" | "end_use"
+      observation_category:
+        | "positive"
+        | "negative"
+        | "neutral"
+        | "discrepancy"
+        | "unverifiable"
       priority_level: "normal" | "urgent"
+      remark_type:
+        | "positive_confirmed"
+        | "negative_not_found"
+        | "negative_discrepancy"
+        | "negative_uncontactable"
+        | "refer_for_review"
+        | "partial_verification"
       task_status:
         | "pending"
         | "assigned"
@@ -1503,6 +1743,14 @@ export type Database = {
         | "qc_review"
         | "approved"
         | "rejected"
+      verification_method_type:
+        | "physical_visit"
+        | "telephonic"
+        | "video_call"
+        | "document_based"
+        | "api_check"
+        | "neighbor_check"
+        | "employer_check"
       verification_type:
         | "profile"
         | "bgv"
@@ -1668,7 +1916,22 @@ export const Constants = {
         "other",
       ],
       fe_skill: ["residential", "business", "end_use"],
+      observation_category: [
+        "positive",
+        "negative",
+        "neutral",
+        "discrepancy",
+        "unverifiable",
+      ],
       priority_level: ["normal", "urgent"],
+      remark_type: [
+        "positive_confirmed",
+        "negative_not_found",
+        "negative_discrepancy",
+        "negative_uncontactable",
+        "refer_for_review",
+        "partial_verification",
+      ],
       task_status: [
         "pending",
         "assigned",
@@ -1677,6 +1940,15 @@ export const Constants = {
         "qc_review",
         "approved",
         "rejected",
+      ],
+      verification_method_type: [
+        "physical_visit",
+        "telephonic",
+        "video_call",
+        "document_based",
+        "api_check",
+        "neighbor_check",
+        "employer_check",
       ],
       verification_type: [
         "profile",
