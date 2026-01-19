@@ -16,12 +16,15 @@ import {
   XCircle,
   AlertTriangle,
   UserPlus,
-  ClipboardCheck
+  ClipboardCheck,
+  Camera
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { TaskAssignmentDialog } from '@/components/tasks/TaskAssignmentDialog';
 import { VerificationExecutionForm } from '@/components/tasks/VerificationExecutionForm';
+import { EvidenceUploadForm } from '@/components/tasks/EvidenceUploadForm';
+import { EvidenceGallery } from '@/components/tasks/EvidenceGallery';
 import type { Enums } from '@/integrations/supabase/types';
 
 type TaskStatus = Enums<'task_status'>;
@@ -135,6 +138,7 @@ export default function TaskDetailPage() {
 
   const deadline = task.sla_deadline ? new Date(task.sla_deadline) : null;
   const isOverdue = task.is_overdue || (deadline && deadline < new Date());
+  const isTaskFinalized = ['approved', 'rejected'].includes(task.status || '');
 
   return (
     <div className="space-y-6">
@@ -155,6 +159,7 @@ export default function TaskDetailPage() {
       <Tabs defaultValue="details" className="space-y-6">
         <TabsList>
           <TabsTrigger value="details" className="gap-2"><User className="h-4 w-4" />Details</TabsTrigger>
+          <TabsTrigger value="evidence" className="gap-2"><Camera className="h-4 w-4" />Evidence</TabsTrigger>
           <TabsTrigger value="verification" className="gap-2"><ClipboardCheck className="h-4 w-4" />Verification</TabsTrigger>
         </TabsList>
 
@@ -189,10 +194,25 @@ export default function TaskDetailPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="evidence">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <EvidenceGallery taskId={task.id} disabled={isTaskFinalized} />
+              {!isTaskFinalized && (
+                <EvidenceUploadForm 
+                  taskId={task.id}
+                  disabled={isTaskFinalized}
+                />
+              )}
+            </div>
+            <SidebarContent task={task} isOverdue={isOverdue || false} deadline={deadline} />
+          </div>
+        </TabsContent>
+
         <TabsContent value="verification">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <VerificationExecutionForm taskId={task.id} verificationType={task.verification_type as VerificationType} disabled={task.status === 'approved' || task.status === 'rejected'} />
+              <VerificationExecutionForm taskId={task.id} verificationType={task.verification_type as VerificationType} disabled={isTaskFinalized} />
             </div>
             <SidebarContent task={task} isOverdue={isOverdue || false} deadline={deadline} />
           </div>
