@@ -1706,6 +1706,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_reassign_task: { Args: { p_user_id: string }; Returns: boolean }
       check_lead_duplicates: {
         Args: {
           _applicant_name: string
@@ -1723,11 +1724,25 @@ export type Database = {
           match_type: string
         }[]
       }
+      find_best_field_executive: {
+        Args: {
+          p_branch_id: string
+          p_pincode: string
+          p_verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Returns: string
+      }
       generate_lead_number: { Args: never; Returns: string }
       generate_task_number: { Args: never; Returns: string }
       get_branch_by_email: {
         Args: { _recipient_email: string }
         Returns: string
+      }
+      get_sla_hours: {
+        Args: {
+          p_verification_type: Database["public"]["Enums"]["verification_type"]
+        }
+        Returns: number
       }
       get_user_branches: { Args: { _user_id: string }; Returns: string[] }
       get_user_clients: { Args: { _user_id: string }; Returns: string[] }
