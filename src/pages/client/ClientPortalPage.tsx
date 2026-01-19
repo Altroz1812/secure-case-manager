@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ function TaskStatusBadge({ status }: { status: string }) {
 }
 
 export default function ClientPortalPage() {
+  const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<ClientPortalTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   
@@ -49,19 +51,25 @@ export default function ClientPortalPage() {
   };
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Client Portal</h1>
-        <p className="text-muted-foreground">
-          View your verification tasks and reports
-        </p>
-        {clientNames.length > 0 && (
-          <div className="flex items-center gap-2 mt-2">
-            <Building className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Organization: <span className="font-medium text-foreground">{clientNames.join(', ')}</span>
-            </span>
-          </div>
-        )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Client Portal</h1>
+          <p className="text-muted-foreground">
+            View your verification tasks and reports
+          </p>
+          {clientNames.length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <Building className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Organization: <span className="font-medium text-foreground">{clientNames.join(', ')}</span>
+              </span>
+            </div>
+          )}
+        </div>
+        <Button onClick={() => navigate('/client-portal/new-lead')}>
+          <FileText className="h-4 w-4 mr-2" />
+          Submit New Request
+        </Button>
       </div>
 
       {/* Stats Cards */}

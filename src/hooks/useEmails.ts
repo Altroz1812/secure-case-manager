@@ -12,7 +12,7 @@ export interface EmailWithAttachments extends Email {
   attachments: EmailAttachment[];
 }
 
-export function useEmails(filter?: { processed?: boolean }) {
+export function useEmails(filter?: { processed?: boolean; branchId?: string }) {
   return useQuery({
     queryKey: ['emails', filter],
     queryFn: async () => {
@@ -23,6 +23,10 @@ export function useEmails(filter?: { processed?: boolean }) {
       
       if (filter?.processed !== undefined) {
         query = query.eq('is_processed', filter.processed);
+      }
+
+      if (filter?.branchId) {
+        query = query.eq('branch_id', filter.branchId);
       }
       
       const { data, error } = await query;

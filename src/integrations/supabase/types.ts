@@ -66,6 +66,7 @@ export type Database = {
       }
       branches: {
         Row: {
+          branch_email: string | null
           city: string
           code: string
           created_at: string
@@ -77,6 +78,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_email?: string | null
           city: string
           code: string
           created_at?: string
@@ -88,6 +90,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_email?: string | null
           city?: string
           code?: string
           created_at?: string
@@ -179,6 +182,42 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_products: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_products_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -345,6 +384,7 @@ export type Database = {
           processed_at: string | null
           processed_by: string | null
           received_at: string
+          recipient_email: string | null
           sender_email: string
           sender_name: string | null
           subject: string
@@ -360,6 +400,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           received_at: string
+          recipient_email?: string | null
           sender_email: string
           sender_name?: string | null
           subject: string
@@ -375,6 +416,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           received_at?: string
+          recipient_email?: string | null
           sender_email?: string
           sender_name?: string | null
           subject?: string
@@ -478,6 +520,57 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_duplicates: {
+        Row: {
+          created_at: string
+          duplicate_lead_id: string | null
+          id: string
+          is_overridden: boolean | null
+          match_score: number | null
+          match_type: string
+          original_lead_id: string
+          overridden_by: string | null
+          override_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          duplicate_lead_id?: string | null
+          id?: string
+          is_overridden?: boolean | null
+          match_score?: number | null
+          match_type: string
+          original_lead_id: string
+          overridden_by?: string | null
+          override_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          duplicate_lead_id?: string | null
+          id?: string
+          is_overridden?: boolean | null
+          match_score?: number | null
+          match_type?: string
+          original_lead_id?: string
+          overridden_by?: string | null
+          override_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_duplicates_duplicate_lead_id_fkey"
+            columns: ["duplicate_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_duplicates_original_lead_id_fkey"
+            columns: ["original_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -1129,8 +1222,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_lead_duplicates: {
+        Args: {
+          _applicant_name: string
+          _application_number?: string
+          _client_id: string
+          _time_window_hours?: number
+        }
+        Returns: {
+          applicant_name: string
+          application_number: string
+          created_at: string
+          lead_id: string
+          lead_number: string
+          match_score: number
+          match_type: string
+        }[]
+      }
       generate_lead_number: { Args: never; Returns: string }
       generate_task_number: { Args: never; Returns: string }
+      get_branch_by_email: {
+        Args: { _recipient_email: string }
+        Returns: string
+      }
       get_user_branches: { Args: { _user_id: string }; Returns: string[] }
       get_user_clients: { Args: { _user_id: string }; Returns: string[] }
       get_user_primary_branch: { Args: { _user_id: string }; Returns: string }
@@ -1160,6 +1274,8 @@ export type Database = {
         Args: { _screen_path: string; _user_id: string }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role:
