@@ -28,6 +28,7 @@ import EmailInboxPage from "./pages/intake/EmailInboxPage";
 import EmailDetailPage from "./pages/intake/EmailDetailPage";
 import LeadsListPage from "./pages/intake/LeadsListPage";
 import LeadFormPage from "./pages/intake/LeadFormPage";
+import LeadDetailPage from "./pages/intake/LeadDetailPage";
 
 // Task Pages
 import TasksListPage from "./pages/tasks/TasksListPage";
@@ -135,7 +136,18 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin', 'intake']}>
                   <AppLayout>
-                    <LeadFormPage />
+              <LeadFormPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/leads/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'intake', 'ops_manager']}>
+                  <AppLayout>
+                    <LeadDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
