@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DuplicateLead {
@@ -38,5 +38,35 @@ export function useCheckLeadDuplicates(
     },
     enabled: enabled && !!clientId && !!applicantName && applicantName.length >= 3,
     staleTime: 0, // Always refetch
+  });
+}
+
+interface CheckDuplicatesParams {
+  client_id: string;
+  applicant_name: string;
+  application_number?: string;
+}
+
+export function useCheckLeadDuplicatesMutation() {
+  return useMutation({
+    mutationFn: async (params: CheckDuplicatesParams) => {
+      if (!params.client_id || !params.applicant_name || params.applicant_name.length < 3) {
+        return [];
+      }
+
+      const { data, error } = await supabase.rpc('check_lead_duplicates', {
+        _client_id: params.client_id,
+        _applicant_name: params.applicant_name,
+        _application_number: params.application_number || null,
+        _time_window_hours: 24,
+      });
+
+      if (error) {
+        console.error('Duplicate check error:', error);
+        return [];
+      }
+
+      return (data || []) as DuplicateLead[];
+    },
   });
 }
