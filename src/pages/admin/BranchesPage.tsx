@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -20,6 +20,7 @@ interface BranchFormData {
   code: string;
   city: string;
   state: string;
+  branch_email: string;
   serviceable_pincodes: string[];
   is_active: boolean;
 }
@@ -29,6 +30,7 @@ const initialFormData: BranchFormData = {
   code: '',
   city: '',
   state: '',
+  branch_email: '',
   serviceable_pincodes: [],
   is_active: true,
 };
@@ -52,6 +54,7 @@ export default function BranchesPage() {
         code: branch.code,
         city: branch.city,
         state: branch.state,
+        branch_email: branch.branch_email || '',
         serviceable_pincodes: branch.serviceable_pincodes || [],
         is_active: branch.is_active ?? true,
       });
@@ -115,6 +118,20 @@ export default function BranchesPage() {
     { key: 'name', header: 'Branch Name' },
     { key: 'city', header: 'City' },
     { key: 'state', header: 'State' },
+    {
+      key: 'branch_email',
+      header: 'Email Routing',
+      render: (branch: Branch) => (
+        branch.branch_email ? (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="truncate max-w-[180px]">{branch.branch_email}</span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm">Not configured</span>
+        )
+      ),
+    },
     {
       key: 'serviceable_pincodes',
       header: 'PIN Codes',
@@ -255,6 +272,19 @@ export default function BranchesPage() {
                     required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branch_email">Branch Email (for Email Routing)</Label>
+                <Input
+                  id="branch_email"
+                  type="email"
+                  value={formData.branch_email}
+                  onChange={(e) => setFormData({ ...formData, branch_email: e.target.value })}
+                  placeholder="e.g., mumbai@company.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Emails sent to this address will be automatically routed to this branch
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pincodes">Serviceable PIN Codes</Label>
