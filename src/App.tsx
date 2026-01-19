@@ -54,6 +54,7 @@ import SettingsPage from "./pages/SettingsPage";
 
 // Client Portal
 import ClientPortalPage from "./pages/client/ClientPortalPage";
+import ClientLeadFormPage from "./pages/client/ClientLeadFormPage";
 
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
@@ -373,6 +374,17 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['client_viewer']}>
                   <AppLayout>
                     <ClientPortalPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/client-portal/new-lead"
+              element={
+                <ProtectedRoute allowedRoles={['client_viewer']}>
+                  <AppLayout>
+                    <ClientLeadFormPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

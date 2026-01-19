@@ -6,12 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ImapConfig {
-  user: string;
-  password: string;
-  host: string;
-  port: number;
-  tls: boolean;
+interface EmailMessage {
+  id: string;
+  from: { emailAddress: { address: string; name?: string } };
+  toRecipients: Array<{ emailAddress: { address: string } }>;
+  subject: string;
+  bodyPreview: string;
+  body?: { content: string };
+  receivedDateTime: string;
+  hasAttachments: boolean;
 }
 
 serve(async (req) => {
@@ -26,7 +29,7 @@ serve(async (req) => {
   const GODADDY_PASSWORD = Deno.env.get("GODADDY_PASSWORD");
 
   if (!GODADDY_EMAIL || !GODADDY_PASSWORD) {
-    console.error("Missing GoDaddy email credentials");
+    console.error("Missing email credentials");
     return new Response(
       JSON.stringify({ 
         success: false, 
@@ -43,34 +46,59 @@ serve(async (req) => {
 
   try {
     console.log("Starting email sync...");
-    console.log(`Connecting to IMAP server for ${GODADDY_EMAIL}`);
-
-    // Note: Direct IMAP connection is not supported in Deno Deploy/Edge Functions
-    // This is a placeholder that demonstrates the intended flow
-    // For production, you'd need to use a webhook-based email service or
-    // run this as a scheduled job on a server that supports IMAP
-    
-    // For now, we'll create a mock implementation that can be triggered
-    // to test the database integration
-    
-    const mockEmailData = {
-      external_id: `mock-${Date.now()}`,
-      sender_email: "test@example.com",
-      sender_name: "Test Sender",
-      subject: "Test Email - Email Sync Working",
-      body_preview: "This is a test email to verify the sync functionality is working correctly.",
-      body_html: "<p>This is a test email to verify the sync functionality is working correctly.</p>",
-      received_at: new Date().toISOString(),
-      is_processed: false,
-    };
-
-    // Check if this is a test mode request
     const url = new URL(req.url);
     const isTestMode = url.searchParams.get('test') === 'true';
+    const branchEmail = url.searchParams.get('branch_email');
+
+    // Helper function to auto-map branch by recipient email
+    async function getBranchByEmail(recipientEmail: string): Promise<string | null> {
+      const { data } = await supabase.rpc('get_branch_by_email', { 
+        _recipient_email: recipientEmail 
+      });
+      return data;
+    }
 
     if (isTestMode) {
       console.log("Running in test mode - inserting mock email");
       
+      // Get a random branch to simulate auto-mapping
+      let branchId: string | null = null;
+      const testRecipientEmail = branchEmail || "test@rcu-branch.com";
+      
+      // Try to get branch by email first
+      branchId = await getBranchByEmail(testRecipientEmail);
+      
+      // If no branch mapped by email, get first active branch
+      if (!branchId) {
+        const { data: branches } = await supabase
+          .from('branches')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1);
+        branchId = branches?.[0]?.id || null;
+      }
+
+      const mockEmailData = {
+        external_id: `mock-${Date.now()}`,
+        sender_email: "client@example.com",
+        sender_name: "Test Client",
+        recipient_email: testRecipientEmail,
+        subject: "Test Email - Verification Request for John Doe",
+        body_preview: "Please verify the address and employment details for applicant John Doe, Application #APP-2024-001.",
+        body_html: `<p>Dear Team,</p>
+          <p>Please verify the following details for our applicant:</p>
+          <ul>
+            <li><strong>Applicant Name:</strong> John Doe</li>
+            <li><strong>Application #:</strong> APP-2024-001</li>
+            <li><strong>Address:</strong> 123 Main Street, Mumbai 400001</li>
+          </ul>
+          <p>Please complete the verification within SLA.</p>
+          <p>Thanks,<br/>Client Team</p>`,
+        received_at: new Date().toISOString(),
+        is_processed: false,
+        branch_id: branchId,
+      };
+
       const { data: existingEmail } = await supabase
         .from("emails")
         .select("id")
@@ -96,35 +124,173 @@ serve(async (req) => {
             success: true, 
             message: "Test email sync completed",
             email_id: email.id,
+            branch_id: branchId,
+            branch_auto_mapped: !!branchId,
             mode: "test"
           }),
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Test email already exists",
+          mode: "test"
+        }),
+        { headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    // Production IMAP sync would go here
-    // For production, consider using:
-    // 1. A webhook service like Zapier, Make, or n8n
-    // 2. A dedicated email service like SendGrid Inbound Parse
-    // 3. Microsoft Graph API for Office 365
-    // 4. Google Gmail API for Gmail
+    // Production Mode - Microsoft Graph API Integration
+    // This section provides the structure for Graph API integration
+    // Requires MS_GRAPH_CLIENT_ID, MS_GRAPH_CLIENT_SECRET, MS_GRAPH_TENANT_ID secrets
     
-    console.log("Email sync configuration validated successfully");
-    console.log("IMAP Host: imap.secureserver.net");
-    console.log("IMAP Port: 993");
-    console.log("TLS: enabled");
+    const MS_GRAPH_CLIENT_ID = Deno.env.get("MS_GRAPH_CLIENT_ID");
+    const MS_GRAPH_CLIENT_SECRET = Deno.env.get("MS_GRAPH_CLIENT_SECRET");
+    const MS_GRAPH_TENANT_ID = Deno.env.get("MS_GRAPH_TENANT_ID");
+
+    if (MS_GRAPH_CLIENT_ID && MS_GRAPH_CLIENT_SECRET && MS_GRAPH_TENANT_ID) {
+      console.log("Microsoft Graph API credentials detected, attempting sync...");
+      
+      try {
+        // Get OAuth token
+        const tokenResponse = await fetch(
+          `https://login.microsoftonline.com/${MS_GRAPH_TENANT_ID}/oauth2/v2.0/token`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id: MS_GRAPH_CLIENT_ID,
+              client_secret: MS_GRAPH_CLIENT_SECRET,
+              scope: 'https://graph.microsoft.com/.default',
+              grant_type: 'client_credentials',
+            }),
+          }
+        );
+
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error("Token fetch failed:", errorText);
+          throw new Error(`Failed to get access token: ${errorText}`);
+        }
+
+        const tokenData = await tokenResponse.json();
+        const accessToken = tokenData.access_token;
+
+        // Fetch unread emails from inbox
+        const mailResponse = await fetch(
+          `https://graph.microsoft.com/v1.0/users/${GODADDY_EMAIL}/mailFolders/inbox/messages?$filter=isRead eq false&$top=50&$select=id,from,toRecipients,subject,bodyPreview,body,receivedDateTime,hasAttachments`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!mailResponse.ok) {
+          const errorText = await mailResponse.text();
+          console.error("Mail fetch failed:", errorText);
+          throw new Error(`Failed to fetch emails: ${errorText}`);
+        }
+
+        const mailData = await mailResponse.json();
+        const messages: EmailMessage[] = mailData.value || [];
+        
+        console.log(`Found ${messages.length} unread emails`);
+
+        let syncedCount = 0;
+        let skippedCount = 0;
+
+        for (const message of messages) {
+          // Check if email already exists
+          const { data: existing } = await supabase
+            .from('emails')
+            .select('id')
+            .eq('external_id', message.id)
+            .maybeSingle();
+
+          if (existing) {
+            skippedCount++;
+            continue;
+          }
+
+          // Get recipient email for branch mapping
+          const recipientEmail = message.toRecipients?.[0]?.emailAddress?.address || GODADDY_EMAIL;
+          
+          // Auto-map branch by recipient email
+          const branchId = await getBranchByEmail(recipientEmail);
+
+          const emailData = {
+            external_id: message.id,
+            sender_email: message.from.emailAddress.address,
+            sender_name: message.from.emailAddress.name || null,
+            recipient_email: recipientEmail,
+            subject: message.subject,
+            body_preview: message.bodyPreview,
+            body_html: message.body?.content || null,
+            received_at: message.receivedDateTime,
+            is_processed: false,
+            branch_id: branchId,
+          };
+
+          const { error: insertError } = await supabase
+            .from('emails')
+            .insert(emailData);
+
+          if (insertError) {
+            console.error(`Failed to insert email ${message.id}:`, insertError);
+          } else {
+            syncedCount++;
+            console.log(`Synced email: ${message.subject} -> Branch: ${branchId || 'unassigned'}`);
+          }
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: `Email sync completed. Synced: ${syncedCount}, Skipped: ${skippedCount}`,
+            synced: syncedCount,
+            skipped: skippedCount,
+            mode: "graph_api"
+          }),
+          { headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+
+      } catch (graphError: any) {
+        console.error("Graph API sync error:", graphError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Graph API sync failed: ${graphError.message}`,
+            mode: "graph_api"
+          }),
+          { 
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          }
+        );
+      }
+    }
+
+    // Fallback: No Graph API configured
+    console.log("No Microsoft Graph API credentials configured");
+    console.log("For production email sync, configure MS_GRAPH_CLIENT_ID, MS_GRAPH_CLIENT_SECRET, and MS_GRAPH_TENANT_ID");
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Email sync configuration is valid. For production IMAP sync, please use a webhook-based solution or scheduled server job.",
+        message: "Email sync configuration is valid. Configure Microsoft Graph API credentials for production sync.",
         config: {
-          host: "imap.secureserver.net",
-          port: 993,
-          tls: true,
-          email: GODADDY_EMAIL.substring(0, 3) + "***"
-        }
+          godaddy_email_configured: true,
+          graph_api_configured: false,
+        },
+        instructions: [
+          "For Office 365/Exchange: Set MS_GRAPH_CLIENT_ID, MS_GRAPH_CLIENT_SECRET, MS_GRAPH_TENANT_ID secrets",
+          "For GoDaddy IMAP: Use a webhook service or external sync tool",
+          "Use ?test=true to insert a test email for development"
+        ]
       }),
       { headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

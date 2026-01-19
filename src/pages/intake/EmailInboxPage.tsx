@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Paperclip, Eye, FileText, Plus, RefreshCw } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Mail, Paperclip, Eye, FileText, Plus, RefreshCw, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,11 +17,17 @@ import { toast } from 'sonner';
 export default function EmailInboxPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'processed' | 'all'>('unprocessed');
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all');
   const [isSyncing, setIsSyncing] = useState(false);
   
-  const filter = activeTab === 'all' ? undefined : { processed: activeTab === 'processed' };
-  const { data: emails, isLoading, refetch } = useEmails(filter);
+  const filter = {
+    ...(activeTab !== 'all' && { processed: activeTab === 'processed' }),
+    ...(selectedBranchFilter && selectedBranchFilter !== 'all' && { branchId: selectedBranchFilter }),
+  };
+  const { data: emails, isLoading, refetch } = useEmails(Object.keys(filter).length > 0 ? filter : undefined);
   const { data: branches } = useBranches();
+
+  const activeBranches = branches?.filter(b => b.is_active) || [];
 
   const getBranchName = (branchId: string | null) => {
     if (!branchId) return 'Unassigned';
@@ -67,6 +74,15 @@ export default function EmailInboxPage() {
             <span className="text-xs text-muted-foreground">{email.sender_email}</span>
           )}
         </div>
+      ),
+    },
+    {
+      key: 'recipient_email',
+      header: 'To',
+      render: (email: EmailWithAttachments) => (
+        <span className="text-sm text-muted-foreground">
+          {(email as any).recipient_email || '-'}
+        </span>
       ),
     },
     {
@@ -149,6 +165,20 @@ export default function EmailInboxPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Syncing...' : 'Sync Emails'}
           </Button>
+          <Select value={selectedBranchFilter} onValueChange={setSelectedBranchFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {activeBranches.map(branch => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button onClick={() => navigate('/leads/new')}>
             <Plus className="h-4 w-4 mr-2" /> Create Lead Manually
           </Button>
