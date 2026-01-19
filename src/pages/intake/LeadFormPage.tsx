@@ -18,6 +18,8 @@ import { ArrowLeft, FileText } from 'lucide-react';
 import { EmailContentPanel } from '@/components/intake/EmailContentPanel';
 import { DroppableInput, DroppableTextarea } from '@/components/intake/DroppableFormField';
 import { DuplicateWarningDialog } from '@/components/intake/DuplicateWarningDialog';
+import { InlineApplicantSection, InlineApplicant } from '@/components/intake/InlineApplicantSection';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -67,6 +69,8 @@ export default function LeadFormPage() {
   const [duplicates, setDuplicates] = useState<any[]>([]);
   const [pendingSubmission, setPendingSubmission] = useState<LeadFormValues | null>(null);
   const [draggedText, setDraggedText] = useState('');
+  const [inlineApplicants, setInlineApplicants] = useState<InlineApplicant[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
@@ -135,9 +139,11 @@ export default function LeadFormPage() {
 
   const submitLead = async (data: LeadFormValues, overrideReason?: string) => {
     if (!user) return;
+    setIsSubmitting(true);
 
     try {
-      await createLead.mutateAsync({
+      // Create the lead
+      const leadResult = await createLead.mutateAsync({
         applicant_name: data.applicant_name,
         client_id: data.client_id,
         product_id: data.product_id,
@@ -152,6 +158,64 @@ export default function LeadFormPage() {
         verification_types: data.verification_types as VerificationType[],
       });
 
+      // Get the created lead ID
+      const leadId = leadResult?.id;
+
+      // Create applicants if any were added inline
+      if (leadId && inlineApplicants.length > 0) {
+        for (const applicant of inlineApplicants) {
+          // Create applicant
+          const { data: createdApplicant, error: applicantError } = await supabase
+            .from('lead_applicants')
+            .insert({
+              lead_id: leadId,
+              applicant_type: applicant.applicant_type,
+              name: applicant.name,
+              relation_to_primary: applicant.relation_to_primary || null,
+              pan_number: applicant.pan_number || null,
+              aadhar_number: applicant.aadhar_number || null,
+              phone: applicant.phone || null,
+              email: applicant.email || null,
+              occupation: applicant.occupation || null,
+              employer_name: applicant.employer_name || null,
+              monthly_income: applicant.monthly_income || null,
+              is_primary: applicant.is_primary,
+            })
+            .select()
+            .single();
+
+          if (applicantError) {
+            console.error('Error creating applicant:', applicantError);
+            continue;
+          }
+
+          // Create addresses for this applicant
+          if (createdApplicant && applicant.addresses.length > 0) {
+            const addressInserts = applicant.addresses.map(addr => ({
+              applicant_id: createdApplicant.id,
+              address_type: addr.address_type,
+              address_line1: addr.address_line1,
+              address_line2: addr.address_line2 || null,
+              landmark: addr.landmark || null,
+              city: addr.city,
+              state: addr.state,
+              pincode: addr.pincode,
+              is_primary: addr.is_primary,
+              ownership_type: addr.ownership_type || null,
+            }));
+
+            const { error: addressError } = await supabase
+              .from('applicant_addresses')
+              .insert(addressInserts);
+
+            if (addressError) {
+              console.error('Error creating addresses:', addressError);
+            }
+          }
+        }
+        toast.success(`Lead created with ${inlineApplicants.length} applicant(s)`);
+      }
+
       // Mark email as processed if creating from email
       if (emailId && user) {
         await markEmailProcessed.mutateAsync({ id: emailId, processedBy: user.id });
@@ -160,6 +224,8 @@ export default function LeadFormPage() {
       navigate('/leads');
     } catch (error) {
       // Error handled by mutation
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -512,13 +578,20 @@ export default function LeadFormPage() {
                 </CardContent>
               </Card>
 
+              {/* Multi-Applicant Section */}
+              <InlineApplicantSection
+                applicants={inlineApplicants}
+                onApplicantsChange={setInlineApplicants}
+                primaryApplicantName={form.watch('applicant_name')}
+              />
+
               {/* Form Actions */}
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createLead.isPending}>
-                  {createLead.isPending ? 'Creating...' : 'Create Lead'}
+                <Button type="submit" disabled={createLead.isPending || isSubmitting}>
+                  {(createLead.isPending || isSubmitting) ? 'Creating...' : 'Create Lead'}
                 </Button>
               </div>
             </form>
