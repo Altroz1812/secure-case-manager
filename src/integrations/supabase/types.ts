@@ -555,6 +555,41 @@ export type Database = {
           },
         ]
       }
+      evidence_validation_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          evidence_id: string
+          id: string
+          passed: boolean
+          validation_type: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          evidence_id: string
+          id?: string
+          passed: boolean
+          validation_type: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          evidence_id?: string
+          id?: string
+          passed?: boolean
+          validation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_validation_logs_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "task_evidence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_executives: {
         Row: {
           created_at: string
@@ -1236,43 +1271,76 @@ export type Database = {
       }
       task_evidence: {
         Row: {
+          address_watermark: string | null
           captured_at: string | null
           created_at: string
+          exif_data: Json | null
+          expected_latitude: number | null
+          expected_longitude: number | null
           file_name: string
           file_type: string | null
+          geo_deviation_flagged: boolean | null
+          geo_deviation_meters: number | null
           id: string
+          is_validated: boolean | null
           latitude: number | null
           longitude: number | null
           remarks: string | null
           storage_path: string
           task_id: string
           uploaded_by: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_errors: string[] | null
+          validation_status: string | null
         }
         Insert: {
+          address_watermark?: string | null
           captured_at?: string | null
           created_at?: string
+          exif_data?: Json | null
+          expected_latitude?: number | null
+          expected_longitude?: number | null
           file_name: string
           file_type?: string | null
+          geo_deviation_flagged?: boolean | null
+          geo_deviation_meters?: number | null
           id?: string
+          is_validated?: boolean | null
           latitude?: number | null
           longitude?: number | null
           remarks?: string | null
           storage_path: string
           task_id: string
           uploaded_by: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_errors?: string[] | null
+          validation_status?: string | null
         }
         Update: {
+          address_watermark?: string | null
           captured_at?: string | null
           created_at?: string
+          exif_data?: Json | null
+          expected_latitude?: number | null
+          expected_longitude?: number | null
           file_name?: string
           file_type?: string | null
+          geo_deviation_flagged?: boolean | null
+          geo_deviation_meters?: number | null
           id?: string
+          is_validated?: boolean | null
           latitude?: number | null
           longitude?: number | null
           remarks?: string | null
           storage_path?: string
           task_id?: string
           uploaded_by?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_errors?: string[] | null
+          validation_status?: string | null
         }
         Relationships: [
           {
