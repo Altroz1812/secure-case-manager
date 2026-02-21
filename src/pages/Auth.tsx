@@ -124,6 +124,21 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const demoAccounts = [
+    { email: 'kranthisamin@gmail.com', password: 'admin123', role: 'Admin', color: 'bg-red-100 text-red-700 border-red-200' },
+    { email: 'intake@gmail.com', password: 'intake123', role: 'Intake', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { email: 'qc@gmail.com', password: 'qc123456', role: 'QC', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { email: 'field@gmail.com', password: 'field123', role: 'Field Executive', color: 'bg-green-100 text-green-700 border-green-200' },
+    { email: 'client@gmail.com', password: 'client123', role: 'Client Viewer', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  ];
+
+  const handleDemoLogin = (email: string, password: string) => {
+    setLoginEmail(email);
+    setLoginPassword(password);
+    setError(null);
+    setSuccess(null);
+  };
+
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -229,7 +244,7 @@ export default function Auth() {
                   </div>
                 </CardContent>
                 
-                <CardFooter>
+                <CardFooter className="flex-col gap-4">
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
@@ -240,6 +255,22 @@ export default function Auth() {
                       'Sign In'
                     )}
                   </Button>
+                  
+                  <div className="w-full">
+                    <p className="text-xs text-muted-foreground mb-2 text-center font-medium">Quick Demo Login</p>
+                    <div className="flex flex-wrap gap-1.5 justify-center">
+                      {demoAccounts.map((account) => (
+                        <button
+                          key={account.email}
+                          type="button"
+                          onClick={() => handleDemoLogin(account.email, account.password)}
+                          className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors hover:opacity-80 ${account.color}`}
+                        >
+                          {account.role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </CardFooter>
               </form>
             </TabsContent>
