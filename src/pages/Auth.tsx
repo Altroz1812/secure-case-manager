@@ -125,11 +125,11 @@ export default function Auth() {
   };
 
   const demoAccounts = [
-    { email: 'kranthisamin@gmail.com', password: 'admin123', role: 'Admin', color: 'bg-red-100 text-red-700 border-red-200' },
-    { email: 'intake@gmail.com', password: 'intake123', role: 'Intake', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    { email: 'qc@gmail.com', password: 'qc123456', role: 'QC', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { email: 'field@gmail.com', password: 'field123', role: 'Field Executive', color: 'bg-green-100 text-green-700 border-green-200' },
-    { email: 'client@gmail.com', password: 'client123', role: 'Client Viewer', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { email: 'kranthisami@gmil.com', password: 'Demo@123', role: 'Admin', color: 'bg-red-100 text-red-700 border-red-200' },
+    { email: 'intake@gmail.com', password: 'Demo@123', role: 'Intake', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { email: 'qc@gmail.com', password: 'Demo@123', role: 'QC', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { email: 'field@gmail.com', password: 'Demo@123', role: 'Field Executive', color: 'bg-green-100 text-green-700 border-green-200' },
+    { email: 'client@gmail.com', password: 'Demo@123', role: 'Client Viewer', color: 'bg-amber-100 text-amber-700 border-amber-200' },
   ];
 
   const handleDemoLogin = (email: string, password: string) => {
