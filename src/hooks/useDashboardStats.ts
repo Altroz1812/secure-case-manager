@@ -116,6 +116,13 @@ export function useDashboardStats() {
         .gte('completed_at', yesterday.toISOString())
         .lt('completed_at', today.toISOString());
 
+      // Pending FE Acceptance (assigned but fe_response is null)
+      const { count: pendingFEAcceptance } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'assigned')
+        .is('fe_response', null);
+
       // Calculate percentage changes
       const leadsChange = yesterdaysLeads && yesterdaysLeads > 0 
         ? Math.round(((todaysLeads || 0) - yesterdaysLeads) / yesterdaysLeads * 100)
@@ -130,6 +137,7 @@ export function useDashboardStats() {
         pendingTasks: pendingTasks || 0,
         slaBreaches: slaBreaches || 0,
         completedToday: completedToday || 0,
+        pendingFEAcceptance: pendingFEAcceptance || 0,
         leadsChange,
         completedChange,
       };
