@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   Building,
   UserPlus,
-  Lock
+  Lock,
+  Upload
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -81,6 +82,12 @@ const mainNavItems: NavItem[] = [
     url: '/emails',
     icon: Mail,
     roles: ['admin', 'intake'],
+  },
+  {
+    title: 'Bulk Upload',
+    url: '/bulk-upload',
+    icon: Upload,
+    roles: ['admin', 'ops_manager'],
   },
   {
     title: 'Leads',
