@@ -12,6 +12,7 @@ export interface DashboardStats {
   pendingTasks: number;
   slaBreaches: number;
   completedToday: number;
+  pendingFEAcceptance: number;
   // Trends (comparing to yesterday)
   leadsChange: number;
   completedChange: number;
