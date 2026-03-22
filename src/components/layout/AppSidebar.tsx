@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   Building,
   UserPlus,
-  Lock
+  Lock,
+  Upload
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import {
