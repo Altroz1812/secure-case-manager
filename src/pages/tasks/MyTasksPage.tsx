@@ -116,6 +116,8 @@ export default function MyTasksPage() {
         <FieldVerificationForm 
           task={activeFormTask} 
           readOnly={['completed', 'qc_review', 'approved'].includes(activeFormTask.status || '')} 
+          expectedLatitude={undefined}
+          expectedLongitude={undefined}
         />
       </div>
     );
