@@ -1,43 +1,40 @@
 
 
-# Consolidate Tasks Pages and Hide Unaccepted Tasks
+# Add Geo-Tagging and Multi-Photo Upload to Verification Form
 
 ## Problem
+The FE's verification form (`FieldVerificationForm` on My Tasks) has no photo upload or GPS capture. Evidence upload exists only on the separate Task Detail page's "Evidence" tab, which FEs don't navigate to from their workflow.
 
-1. **"Tasks" and "My Tasks" are nearly identical** with no clear role-based separation or validation. Both show task lists with overlapping data and no meaningful access control difference.
-2. **Tasks appear in the list before the FE accepts them.** The workflow requires FEs to Accept/Send Back, but currently all assigned tasks show up everywhere immediately.
+## Changes
 
-## Proposed Changes
+### 1. Add multi-photo upload section to FieldVerificationForm
+- Add a new "Photo Evidence" section below the verification fields in `FieldVerificationForm.tsx`
+- Support selecting **multiple files at once** (via `multiple` attribute on file input)
+- Show thumbnail previews of all selected/uploaded photos in a grid
+- Allow removing individual photos before upload
+- Auto-capture GPS once when the first photo is selected
 
-### 1. Remove "Tasks" page for Field Executives -- merge into "My Tasks"
+### 2. Add GPS location capture to the form
+- Add a "Capture Location" button at the top of the form that uses `navigator.geolocation`
+- Display captured coordinates with a green confirmation badge
+- Show geo-deviation warning if expected coordinates are available (from the lead's address)
+- GPS is captured once and applied to all photos in the session
 
-- **"My Tasks" (`/my-tasks`)** stays as the FE-only view with the accept/send-back workflow. Available to `field_executive` and `analyst` roles.
-- **"All Tasks" (`/tasks`)** becomes an **admin/ops/QC-only** supervisory view. Remove `field_executive` from its allowed roles in the sidebar.
-- This gives clear purpose: FEs use "My Tasks" for their workflow; managers use "All Tasks" for oversight and assignment.
+### 3. Upload photos with GPS metadata on save/submit
+- On "Save Draft" or "Submit", upload all queued photos via the existing `useUploadEvidence` hook
+- Each photo gets the same GPS coordinates captured in the form
+- Show upload progress indicator for batch uploads
+- Already-uploaded evidence (from `useTaskEvidence`) is shown in the gallery above the upload area
 
-### 2. Hide unaccepted tasks from the "All Tasks" supervisory view
-
-In `TasksListPage.tsx`, filter out tasks where `fe_response` is `null` and status is `assigned` (i.e., the FE hasn't accepted yet). These should only be visible in the FE's "My Tasks" view. Supervisors will see:
-- **Pending** tasks (unassigned, ready for assignment)
-- **Accepted/In Progress** tasks (FE working on them)
-- **Completed/QC/Approved/Rejected** tasks
-
-Optionally add a "Pending Acceptance" stats card so managers know how many tasks are awaiting FE response, without cluttering the main table.
-
-### 3. Add status filter for "Pending Acceptance" in All Tasks
-
-Add a new filter option "Pending FE Acceptance" that explicitly shows tasks where `status = 'assigned'` and `fe_response IS NULL`, so managers can see them when needed but they're hidden by default.
+### 4. Reuse existing components
+- Reuse `EvidenceGallery` (read-only view of uploaded evidence) inside the form
+- Reuse the `useUploadEvidence` mutation and GPS calculation logic from `EvidenceUploadForm`
+- No backend or database changes needed -- all existing tables and storage buckets support this
 
 ## Files to Modify
+- **`src/components/tasks/FieldVerificationForm.tsx`** -- Add GPS capture section, multi-photo upload area with previews, integrate `EvidenceGallery`, and batch upload on save/submit
+- **`src/pages/tasks/MyTasksPage.tsx`** -- Pass `expectedLatitude`/`expectedLongitude` from lead address data if available
 
-- **`src/components/layout/AppSidebar.tsx`** -- Remove `field_executive` from the "Tasks" nav item roles
-- **`src/pages/tasks/TasksListPage.tsx`** -- Filter out unaccepted tasks by default; add "Pending Acceptance" filter option and stats card
-- **`src/hooks/useTasks.ts`** -- Add `excludeUnaccepted` filter option to the `useTasks` hook
-
-## Summary
-
-| Page | Who sees it | What it shows |
-|------|------------|---------------|
-| My Tasks | FE, Analyst | Only their assigned tasks with accept/send-back workflow |
-| All Tasks | Admin, Ops Manager, QC | All tasks except unaccepted (with toggle to view them) |
+## No backend changes required
+The `task_evidence` table, `task-evidence` storage bucket, and `useUploadEvidence` hook already handle everything needed.
 
