@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   UserPlus,
   UserCog,
-  Filter
+  Filter,
+  Hourglass
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { TaskAssignmentDialog } from '@/components/tasks/TaskAssignmentDialog';
@@ -56,21 +57,45 @@ const verificationTypeLabels: Record<string, string> = {
   residential: 'Residential Verification',
 };
 
+type FilterStatus = TaskStatus | 'all' | 'pending_acceptance';
+
 export default function TasksListPage() {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [assignmentTask, setAssignmentTask] = useState<TaskWithDetails | null>(null);
 
   const { data: branches } = useBranches();
-  const { data: tasks, isLoading } = useTasks(
-    statusFilter !== 'all' || branchFilter !== 'all'
-      ? {
-          ...(statusFilter !== 'all' && { status: statusFilter }),
-          ...(branchFilter !== 'all' && { branchId: branchFilter }),
-        }
-      : undefined
-  );
+
+  // Build query filters - for "pending_acceptance" we fetch assigned status from DB
+  const queryFilters = (() => {
+    if (statusFilter === 'all' && branchFilter === 'all') return undefined;
+    if (statusFilter === 'pending_acceptance') {
+      return {
+        status: 'assigned' as TaskStatus,
+        ...(branchFilter !== 'all' && { branchId: branchFilter }),
+      };
+    }
+    return {
+      ...(statusFilter !== 'all' && { status: statusFilter as TaskStatus }),
+      ...(branchFilter !== 'all' && { branchId: branchFilter }),
+    };
+  })();
+
+  const { data: allTasks, isLoading } = useTasks(queryFilters);
+
+  // Client-side filtering for visibility logic
+  const tasks = allTasks?.filter(task => {
+    if (statusFilter === 'pending_acceptance') {
+      // Show only assigned tasks where FE hasn't responded yet
+      return task.status === 'assigned' && !task.fe_response;
+    }
+    if (statusFilter === 'all') {
+      // Hide unaccepted tasks by default (assigned but fe_response is null)
+      if (task.status === 'assigned' && !task.fe_response) return false;
+    }
+    return true;
+  });
 
   const columns = [
     { 
@@ -168,10 +193,11 @@ export default function TasksListPage() {
     },
   ];
 
-  // Stats
-  const pendingCount = tasks?.filter(t => t.status === 'pending').length || 0;
-  const overdueCount = tasks?.filter(t => t.is_overdue).length || 0;
-  const completedTodayCount = tasks?.filter(t => {
+  // Stats - computed from allTasks (unfiltered) to show accurate counts
+  const pendingCount = allTasks?.filter(t => t.status === 'pending').length || 0;
+  const overdueCount = allTasks?.filter(t => t.is_overdue).length || 0;
+  const pendingAcceptanceCount = allTasks?.filter(t => t.status === 'assigned' && !t.fe_response).length || 0;
+  const completedTodayCount = allTasks?.filter(t => {
     if (!t.completed_at) return false;
     const today = new Date();
     const completedAt = new Date(t.completed_at);
@@ -191,7 +217,7 @@ export default function TasksListPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tasks</CardTitle>
@@ -209,6 +235,17 @@ export default function TasksListPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-primary">{pendingCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all" onClick={() => setStatusFilter('pending_acceptance')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <Hourglass className="h-4 w-4" />
+              Pending FE Acceptance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-amber-600">{pendingAcceptanceCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -241,12 +278,13 @@ export default function TasksListPage() {
           <Filter className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Filters:</span>
         </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TaskStatus | 'all')}>
-          <SelectTrigger className="w-[180px]">
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FilterStatus)}>
+          <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending_acceptance">Pending FE Acceptance</SelectItem>
             {Object.entries(statusLabels).map(([value, label]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}

@@ -99,7 +99,7 @@ const mainNavItems: NavItem[] = [
     title: 'Tasks',
     url: '/tasks',
     icon: ClipboardList,
-    roles: ['admin', 'ops_manager', 'qc', 'analyst', 'field_executive'],
+    roles: ['admin', 'ops_manager', 'qc'],
   },
   {
     title: 'My Tasks',
