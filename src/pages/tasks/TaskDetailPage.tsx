@@ -16,6 +16,7 @@ import {
   XCircle,
   AlertTriangle,
   UserPlus,
+  UserCog,
   ClipboardCheck,
   Camera
 } from 'lucide-react';
@@ -152,7 +153,11 @@ export default function TaskDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge className={statusColors[task.status || 'pending']}>{statusLabels[task.status || 'pending']}</Badge>
-          {(task.status === 'pending' || !task.assigned_to) && <Button onClick={() => setShowAssignment(true)}><UserPlus className="h-4 w-4 mr-2" /> Assign</Button>}
+          {!isTaskFinalized && (
+            <Button onClick={() => setShowAssignment(true)}>
+              {task.assigned_to ? <><UserCog className="h-4 w-4 mr-2" /> Reassign</> : <><UserPlus className="h-4 w-4 mr-2" /> Assign</>}
+            </Button>
+          )}
         </div>
       </div>
 

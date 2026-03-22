@@ -14,6 +14,7 @@ import {
   AlertTriangle, 
   CheckCircle2,
   UserPlus,
+  UserCog,
   Filter
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -143,18 +144,27 @@ export default function TasksListPage() {
     {
       key: 'actions',
       header: 'Actions',
-      render: (task: TaskWithDetails) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/tasks/${task.id}`)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          {(task.status === 'pending' || !task.assigned_to) && (
-            <Button variant="ghost" size="icon" onClick={() => setAssignmentTask(task)}>
-              <UserPlus className="h-4 w-4" />
+      render: (task: TaskWithDetails) => {
+        const isFinalized = ['approved', 'rejected'].includes(task.status || '');
+        const isUnassigned = task.status === 'pending' || !task.assigned_to;
+        return (
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/tasks/${task.id}`)}>
+              <Eye className="h-4 w-4" />
             </Button>
-          )}
-        </div>
-      ),
+            {!isFinalized && isUnassigned && (
+              <Button variant="ghost" size="icon" onClick={() => setAssignmentTask(task)} title="Assign">
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            )}
+            {!isFinalized && !isUnassigned && (
+              <Button variant="ghost" size="icon" onClick={() => setAssignmentTask(task)} title="Reassign">
+                <UserCog className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
