@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Users,
   TrendingUp,
-  Calendar
+  Calendar,
+  Hourglass
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
