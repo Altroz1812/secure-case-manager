@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Users,
   TrendingUp,
-  Calendar
+  Calendar,
+  Hourglass
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -123,7 +124,7 @@ export default function Dashboard() {
 
       {/* Stats Grid for Admin/Ops Manager/Intake */}
       {(showFullDashboard || showIntakeDashboard) && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <StatCard
             title="Today's Leads"
             value={dashboardStats?.todaysLeads ?? 0}
@@ -137,6 +138,13 @@ export default function Dashboard() {
             value={dashboardStats?.pendingTasks ?? 0}
             description="Awaiting action"
             icon={ClipboardList}
+            isLoading={statsLoading}
+          />
+          <StatCard
+            title="Pending FE Acceptance"
+            value={dashboardStats?.pendingFEAcceptance ?? 0}
+            description="Awaiting executive response"
+            icon={Hourglass}
             isLoading={statsLoading}
           />
           <StatCard
