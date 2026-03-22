@@ -28,6 +28,7 @@ import EmailInboxPage from "./pages/intake/EmailInboxPage";
 import EmailDetailPage from "./pages/intake/EmailDetailPage";
 import LeadsListPage from "./pages/intake/LeadsListPage";
 import LeadFormPage from "./pages/intake/LeadFormPage";
+import BulkUploadPage from "./pages/intake/BulkUploadPage";
 import LeadDetailPage from "./pages/intake/LeadDetailPage";
 
 // Task Pages
