@@ -64,10 +64,10 @@ const VERIFICATION_MAP: Record<string, string> = {
 };
 
 const PRIORITY_MAP: Record<string, string> = {
-  'high': 'high',
+  'high': 'urgent',
   'medium': 'normal',
   'normal': 'normal',
-  'low': 'low',
+  'low': 'normal',
   'urgent': 'urgent',
 };
 
