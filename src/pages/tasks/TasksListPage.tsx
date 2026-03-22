@@ -14,6 +14,7 @@ import {
   AlertTriangle, 
   CheckCircle2,
   UserPlus,
+  UserCog,
   Filter
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
