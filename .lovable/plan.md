@@ -1,26 +1,43 @@
 
 
-# Fix: Enable Manual Assignment and Reassignment for Uploaded Cases
+# Consolidate Tasks Pages and Hide Unaccepted Tasks
 
 ## Problem
-The "Assign" button in the Tasks List page only appears when `task.status === 'pending' || !task.assigned_to`. This means once a task is assigned, there's no reassign button visible. Additionally, tasks from bulk upload may need initial manual assignment or reassignment to different FEs.
 
-## Changes
+1. **"Tasks" and "My Tasks" are nearly identical** with no clear role-based separation or validation. Both show task lists with overlapping data and no meaningful access control difference.
+2. **Tasks appear in the list before the FE accepts them.** The workflow requires FEs to Accept/Send Back, but currently all assigned tasks show up everywhere immediately.
 
-### 1. Show Assign/Reassign button for all actionable statuses (TasksListPage.tsx)
-- Change the condition on line 151-155 from only showing for `pending`/unassigned to also showing a "Reassign" icon for tasks in `assigned`, `in_progress`, or `sent_back` statuses
-- Add a "Reassign" icon (e.g., `UserCog` or `RefreshCw`) alongside the view button for already-assigned tasks
+## Proposed Changes
 
-### 2. Show Assign/Reassign button on TaskDetailPage.tsx
-- Add a prominent "Assign" or "Reassign" button in the task detail header area so admins/ops managers can assign or reassign from the detail view
-- The `TaskAssignmentDialog` already handles both assign and reassign flows with mandatory reason for reassignment
+### 1. Remove "Tasks" page for Field Executives -- merge into "My Tasks"
 
-### 3. No backend changes needed
-- The `TaskAssignmentDialog` component already supports both assignment and reassignment with role checks (Admin, QC, Ops Manager can reassign)
-- The `useAssignTask` mutation already updates the task and creates an assignment audit record
-- RLS policies already allow authorized roles to update tasks
+- **"My Tasks" (`/my-tasks`)** stays as the FE-only view with the accept/send-back workflow. Available to `field_executive` and `analyst` roles.
+- **"All Tasks" (`/tasks`)** becomes an **admin/ops/QC-only** supervisory view. Remove `field_executive` from its allowed roles in the sidebar.
+- This gives clear purpose: FEs use "My Tasks" for their workflow; managers use "All Tasks" for oversight and assignment.
 
-## Files to modify
-- `src/pages/tasks/TasksListPage.tsx` -- expand the assign button visibility condition
-- `src/pages/tasks/TaskDetailPage.tsx` -- add assign/reassign button in the header
+### 2. Hide unaccepted tasks from the "All Tasks" supervisory view
+
+In `TasksListPage.tsx`, filter out tasks where `fe_response` is `null` and status is `assigned` (i.e., the FE hasn't accepted yet). These should only be visible in the FE's "My Tasks" view. Supervisors will see:
+- **Pending** tasks (unassigned, ready for assignment)
+- **Accepted/In Progress** tasks (FE working on them)
+- **Completed/QC/Approved/Rejected** tasks
+
+Optionally add a "Pending Acceptance" stats card so managers know how many tasks are awaiting FE response, without cluttering the main table.
+
+### 3. Add status filter for "Pending Acceptance" in All Tasks
+
+Add a new filter option "Pending FE Acceptance" that explicitly shows tasks where `status = 'assigned'` and `fe_response IS NULL`, so managers can see them when needed but they're hidden by default.
+
+## Files to Modify
+
+- **`src/components/layout/AppSidebar.tsx`** -- Remove `field_executive` from the "Tasks" nav item roles
+- **`src/pages/tasks/TasksListPage.tsx`** -- Filter out unaccepted tasks by default; add "Pending Acceptance" filter option and stats card
+- **`src/hooks/useTasks.ts`** -- Add `excludeUnaccepted` filter option to the `useTasks` hook
+
+## Summary
+
+| Page | Who sees it | What it shows |
+|------|------------|---------------|
+| My Tasks | FE, Analyst | Only their assigned tasks with accept/send-back workflow |
+| All Tasks | Admin, Ops Manager, QC | All tasks except unaccepted (with toggle to view them) |
 
