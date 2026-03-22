@@ -248,6 +248,15 @@ export function useBulkUpload() {
 
           if (leadError) throw leadError;
 
+          // Create primary applicant record
+          await supabase.from('lead_applicants').insert({
+            lead_id: lead.id,
+            name: row.applicantName,
+            applicant_type: 'primary',
+            is_primary: true,
+            phone: row.mobile || null,
+          });
+
           // Add co-applicant if provided
           if (row.coApplicantName && row.coApplicantName !== 'NA') {
             await supabase.from('lead_applicants').insert({
