@@ -227,6 +227,94 @@ export type Database = {
         }
         Relationships: []
       }
+      bulk_uploads: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          error_log: Json | null
+          failed_rows: number
+          file_name: string
+          id: string
+          processed_rows: number
+          status: string
+          total_rows: number
+          uploaded_by: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          error_log?: Json | null
+          failed_rows?: number
+          file_name: string
+          id?: string
+          processed_rows?: number
+          status?: string
+          total_rows?: number
+          uploaded_by: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          error_log?: Json | null
+          failed_rows?: number
+          file_name?: string
+          id?: string
+          processed_rows?: number
+          status?: string
+          total_rows?: number
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_uploads_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_field_data: {
+        Row: {
+          created_at: string
+          field_data: Json
+          form_type: string
+          id: string
+          submitted_at: string | null
+          submitted_by: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_data?: Json
+          form_type?: string
+          id?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_data?: Json
+          form_type?: string
+          id?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_field_data_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_branches: {
         Row: {
           branch_id: string
@@ -805,6 +893,7 @@ export type Database = {
           applicant_name: string
           application_number: string | null
           branch_id: string
+          category: string | null
           client_branch_id: string | null
           client_id: string
           created_at: string
@@ -824,6 +913,7 @@ export type Database = {
           applicant_name: string
           application_number?: string | null
           branch_id: string
+          category?: string | null
           client_branch_id?: string | null
           client_id: string
           created_at?: string
@@ -843,6 +933,7 @@ export type Database = {
           applicant_name?: string
           application_number?: string | null
           branch_id?: string
+          category?: string | null
           client_branch_id?: string | null
           client_id?: string
           created_at?: string
@@ -1442,13 +1533,17 @@ export type Database = {
           branch_id: string
           completed_at: string | null
           created_at: string
+          fe_code: string | null
+          fe_response: Database["public"]["Enums"]["fe_response_type"] | null
           final_remarks: string | null
+          geo_limit: string | null
           id: string
           is_overdue: boolean | null
           lead_id: string
           qc_remarks: string | null
           qc_reviewed_at: string | null
           qc_reviewed_by: string | null
+          send_back_reason: string | null
           sla_deadline: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           task_number: string
@@ -1461,13 +1556,17 @@ export type Database = {
           branch_id: string
           completed_at?: string | null
           created_at?: string
+          fe_code?: string | null
+          fe_response?: Database["public"]["Enums"]["fe_response_type"] | null
           final_remarks?: string | null
+          geo_limit?: string | null
           id?: string
           is_overdue?: boolean | null
           lead_id: string
           qc_remarks?: string | null
           qc_reviewed_at?: string | null
           qc_reviewed_by?: string | null
+          send_back_reason?: string | null
           sla_deadline?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_number: string
@@ -1480,13 +1579,17 @@ export type Database = {
           branch_id?: string
           completed_at?: string | null
           created_at?: string
+          fe_code?: string | null
+          fe_response?: Database["public"]["Enums"]["fe_response_type"] | null
           final_remarks?: string | null
+          geo_limit?: string | null
           id?: string
           is_overdue?: boolean | null
           lead_id?: string
           qc_remarks?: string | null
           qc_reviewed_at?: string | null
           qc_reviewed_by?: string | null
+          send_back_reason?: string | null
           sla_deadline?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_number?: string
@@ -1803,6 +1906,7 @@ export type Database = {
         | "utility_bill"
         | "rent_agreement"
         | "other"
+      fe_response_type: "accepted" | "sent_back"
       fe_skill: "residential" | "business" | "end_use"
       observation_category:
         | "positive"
@@ -1998,6 +2102,7 @@ export const Constants = {
         "rent_agreement",
         "other",
       ],
+      fe_response_type: ["accepted", "sent_back"],
       fe_skill: ["residential", "business", "end_use"],
       observation_category: [
         "positive",
