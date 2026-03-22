@@ -154,6 +154,18 @@ const App = () => (
               }
             />
             
+            {/* Bulk Upload */}
+            <Route
+              path="/bulk-upload"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'ops_manager']}>
+                  <AppLayout>
+                    <BulkUploadPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Tasks */}
             <Route
               path="/tasks"

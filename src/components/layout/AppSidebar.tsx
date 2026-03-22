@@ -84,6 +84,12 @@ const mainNavItems: NavItem[] = [
     roles: ['admin', 'intake'],
   },
   {
+    title: 'Bulk Upload',
+    url: '/bulk-upload',
+    icon: Upload,
+    roles: ['admin', 'ops_manager'],
+  },
+  {
     title: 'Leads',
     url: '/leads',
     icon: FileText,
