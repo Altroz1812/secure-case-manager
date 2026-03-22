@@ -16,6 +16,7 @@ import {
   XCircle,
   AlertTriangle,
   UserPlus,
+  UserCog,
   ClipboardCheck,
   Camera
 } from 'lucide-react';
