@@ -4,7 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,16 +15,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Settings, Trash2, Edit, FileText } from 'lucide-react';
+import { Plus, Settings, Trash2, Edit, FileText, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useClientReportConfigs,
   useCreateClientReportConfig,
   useUpdateClientReportConfig,
   useDeleteClientReportConfig,
+  type ClientReportConfigWithClient,
 } from '@/hooks/useClientReportConfigs';
 import { useClients } from '@/hooks/useClients';
 import type { Json } from '@/integrations/supabase/types';
+import ReportTemplateBuilder from '@/components/reports/ReportTemplateBuilder';
+import { TemplateConfig } from '@/components/reports/reportTypes';
 
 const REPORT_TYPES = [
   { value: 'verification_report', label: 'Verification Report' },
@@ -33,21 +35,30 @@ const REPORT_TYPES = [
   { value: 'mis_report', label: 'MIS Report' },
 ];
 
+const DEFAULT_TEMPLATE: TemplateConfig = {
+  pageSize: 'A4',
+  orientation: 'portrait',
+  margins: { top: 40, right: 30, bottom: 40, left: 30 },
+  blocks: [],
+};
+
 export default function ReportConfigPage() {
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<string | null>(null);
+  const [editingConfig, setEditingConfig] = useState<ClientReportConfigWithClient | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
+  // Form state for create dialog
+  const [createForm, setCreateForm] = useState({
     client_id: '',
-    report_type: '' as 'verification_report' | 'consolidated_report' | 'mis_report' | '',
+    report_type: '' as string,
     config_name: '',
-    template_config: '{}',
-    header_config: '{}',
-    field_mappings: '{}',
     is_active: true,
   });
+
+  // Builder state
+  const [builderTemplate, setBuilderTemplate] = useState<TemplateConfig>(DEFAULT_TEMPLATE);
+  const [builderName, setBuilderName] = useState('');
+  const [builderActive, setBuilderActive] = useState(true);
 
   const { data: configs, isLoading } = useClientReportConfigs(selectedClient || undefined);
   const { data: clients } = useClients();
@@ -55,72 +66,54 @@ export default function ReportConfigPage() {
   const updateConfig = useUpdateClientReportConfig();
   const deleteConfig = useDeleteClientReportConfig();
 
-  const resetForm = () => {
-    setFormData({
-      client_id: '',
-      report_type: '',
-      config_name: '',
-      template_config: '{}',
-      header_config: '{}',
-      field_mappings: '{}',
-      is_active: true,
-    });
-  };
-
   const handleCreate = () => {
-    if (!formData.client_id || !formData.report_type || !formData.config_name) {
+    if (!createForm.client_id || !createForm.report_type || !createForm.config_name) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    try {
-      const templateConfig = JSON.parse(formData.template_config);
-      const headerConfig = JSON.parse(formData.header_config);
-      const fieldMappings = JSON.parse(formData.field_mappings);
-
-      createConfig.mutate({
-        client_id: formData.client_id,
-        report_type: formData.report_type as 'verification_report' | 'consolidated_report' | 'mis_report',
-        config_name: formData.config_name,
-        template_config: templateConfig as Json,
-        header_config: headerConfig as Json,
-        field_mappings: fieldMappings as Json,
-        is_active: formData.is_active,
-      }, {
-        onSuccess: () => {
-          setIsCreateOpen(false);
-          resetForm();
-        },
-      });
-    } catch (error) {
-      toast.error('Invalid JSON in configuration fields');
-    }
+    createConfig.mutate({
+      client_id: createForm.client_id,
+      report_type: createForm.report_type as 'verification_report' | 'consolidated_report' | 'mis_report',
+      config_name: createForm.config_name,
+      template_config: DEFAULT_TEMPLATE as unknown as Json,
+      header_config: {} as Json,
+      field_mappings: {} as Json,
+      is_active: createForm.is_active,
+    }, {
+      onSuccess: () => {
+        setIsCreateOpen(false);
+        setCreateForm({ client_id: '', report_type: '', config_name: '', is_active: true });
+        toast.success('Configuration created. Click Edit to design your template.');
+      },
+    });
   };
 
-  const handleUpdate = (id: string) => {
-    try {
-      const templateConfig = JSON.parse(formData.template_config);
-      const headerConfig = JSON.parse(formData.header_config);
-      const fieldMappings = JSON.parse(formData.field_mappings);
+  const startEditing = (config: ClientReportConfigWithClient) => {
+    const tc = config.template_config as any;
+    const template: TemplateConfig = tc?.blocks
+      ? { pageSize: tc.pageSize || 'A4', orientation: tc.orientation || 'portrait', margins: tc.margins || { top: 40, right: 30, bottom: 40, left: 30 }, blocks: tc.blocks }
+      : DEFAULT_TEMPLATE;
+    setBuilderTemplate(template);
+    setBuilderName(config.config_name);
+    setBuilderActive(config.is_active);
+    setEditingConfig(config);
+  };
 
-      updateConfig.mutate({
-        id,
-        updates: {
-          config_name: formData.config_name,
-          template_config: templateConfig,
-          header_config: headerConfig,
-          field_mappings: fieldMappings,
-          is_active: formData.is_active,
-        },
-      }, {
-        onSuccess: () => {
-          setEditingConfig(null);
-          resetForm();
-        },
-      });
-    } catch (error) {
-      toast.error('Invalid JSON in configuration fields');
-    }
+  const saveEditing = () => {
+    if (!editingConfig) return;
+    updateConfig.mutate({
+      id: editingConfig.id,
+      updates: {
+        config_name: builderName,
+        template_config: builderTemplate as unknown as Json,
+        is_active: builderActive,
+      },
+    }, {
+      onSuccess: () => {
+        setEditingConfig(null);
+      },
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -129,18 +122,38 @@ export default function ReportConfigPage() {
     }
   };
 
-  const startEditing = (config: any) => {
-    setFormData({
-      client_id: config.client_id,
-      report_type: config.report_type,
-      config_name: config.config_name,
-      template_config: JSON.stringify(config.template_config, null, 2),
-      header_config: JSON.stringify(config.header_config, null, 2),
-      field_mappings: JSON.stringify(config.field_mappings, null, 2),
-      is_active: config.is_active,
-    });
-    setEditingConfig(config.id);
-  };
+  // If editing, show the builder
+  if (editingConfig) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => setEditingConfig(null)}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <div className="flex-1">
+            <Input
+              value={builderName}
+              onChange={e => setBuilderName(e.target.value)}
+              className="h-8 text-lg font-semibold border-none shadow-none px-0 focus-visible:ring-0"
+              placeholder="Configuration name"
+            />
+            <div className="text-xs text-muted-foreground">
+              {editingConfig.client?.name} · {REPORT_TYPES.find(t => t.value === editingConfig.report_type)?.label}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={builderActive} onCheckedChange={setBuilderActive} />
+            <Label className="text-xs">Active</Label>
+          </div>
+          <Button onClick={saveEditing} disabled={updateConfig.isPending}>
+            Save Configuration
+          </Button>
+        </div>
+
+        <ReportTemplateBuilder value={builderTemplate} onChange={setBuilderTemplate} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -149,58 +162,40 @@ export default function ReportConfigPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Report Configurations</h1>
           <p className="text-muted-foreground">
-            Configure client-specific report formats and templates
+            Design client-specific PDF report templates with visual builder
           </p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setIsCreateOpen(true); }}>
+            <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Configuration
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Report Configuration</DialogTitle>
               <DialogDescription>
-                Configure a new report template for a client
+                Set up a new template — you'll design the layout in the visual builder after creation.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Client *</Label>
-                  <Select 
-                    value={formData.client_id} 
-                    onValueChange={(v) => setFormData(prev => ({ ...prev, client_id: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select client" />
-                    </SelectTrigger>
+                  <Select value={createForm.client_id} onValueChange={v => setCreateForm(p => ({ ...p, client_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                     <SelectContent>
-                      {clients?.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
+                      {clients?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Report Type *</Label>
-                  <Select 
-                    value={formData.report_type} 
-                    onValueChange={(v) => setFormData(prev => ({ ...prev, report_type: v as any }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
+                  <Select value={createForm.report_type} onValueChange={v => setCreateForm(p => ({ ...p, report_type: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
-                      {REPORT_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
+                      {REPORT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -208,132 +203,84 @@ export default function ReportConfigPage() {
               <div className="space-y-2">
                 <Label>Configuration Name *</Label>
                 <Input
-                  value={formData.config_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, config_name: e.target.value }))}
-                  placeholder="e.g., Standard Verification Template"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Template Configuration (JSON)</Label>
-                <Textarea
-                  value={formData.template_config}
-                  onChange={(e) => setFormData(prev => ({ ...prev, template_config: e.target.value }))}
-                  className="font-mono text-sm"
-                  rows={4}
-                  placeholder='{"logo_position": "top-left", "page_size": "A4"}'
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Header Configuration (JSON)</Label>
-                <Textarea
-                  value={formData.header_config}
-                  onChange={(e) => setFormData(prev => ({ ...prev, header_config: e.target.value }))}
-                  className="font-mono text-sm"
-                  rows={4}
-                  placeholder='{"title": "Verification Report", "show_date": true}'
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Field Mappings (JSON)</Label>
-                <Textarea
-                  value={formData.field_mappings}
-                  onChange={(e) => setFormData(prev => ({ ...prev, field_mappings: e.target.value }))}
-                  className="font-mono text-sm"
-                  rows={4}
-                  placeholder='{"applicant_name": "Applicant Name", "address": "Residence Address"}'
+                  value={createForm.config_name}
+                  onChange={e => setCreateForm(p => ({ ...p, config_name: e.target.value }))}
+                  placeholder="e.g., FI Report - Standard"
                 />
               </div>
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, is_active: v }))}
-                />
+                <Switch checked={createForm.is_active} onCheckedChange={v => setCreateForm(p => ({ ...p, is_active: v }))} />
                 <Label>Active</Label>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate} disabled={createConfig.isPending}>
-                Create Configuration
-              </Button>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreate} disabled={createConfig.isPending}>Create</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Filters */}
+      {/* Filter */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <Select value={selectedClient || "all"} onValueChange={(v) => setSelectedClient(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Filter by Client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {clients?.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={selectedClient || 'all'} onValueChange={v => setSelectedClient(v === 'all' ? '' : v)}>
+            <SelectTrigger className="w-[250px]"><SelectValue placeholder="Filter by Client" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Configurations Grid */}
+      {/* Grid */}
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : configs?.length ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {configs.map((config) => (
-            <Card key={config.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{config.config_name}</CardTitle>
-                    <CardDescription>{config.client?.name}</CardDescription>
+          {configs.map(config => {
+            const tc = config.template_config as any;
+            const blockCount = tc?.blocks?.length || 0;
+            return (
+              <Card key={config.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{config.config_name}</CardTitle>
+                      <CardDescription>{config.client?.name}</CardDescription>
+                    </div>
+                    <Badge variant={config.is_active ? 'default' : 'secondary'}>
+                      {config.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
                   </div>
-                  <Badge variant={config.is_active ? 'default' : 'secondary'}>
-                    {config.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {REPORT_TYPES.find(t => t.value === config.report_type)?.label}
-                    </span>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {REPORT_TYPES.find(t => t.value === config.report_type)?.label}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {blockCount} block{blockCount !== 1 ? 's' : ''} configured
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => startEditing(config)}>
+                        <Edit className="mr-1 h-3 w-3" /> Design
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(config.id)}>
+                        <Trash2 className="mr-1 h-3 w-3" /> Delete
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => startEditing(config)}
-                    >
-                      <Edit className="mr-1 h-3 w-3" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(config.id)}
-                    >
-                      <Trash2 className="mr-1 h-3 w-3" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card>
@@ -346,72 +293,6 @@ export default function ReportConfigPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingConfig} onOpenChange={(open) => !open && setEditingConfig(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Configuration</DialogTitle>
-            <DialogDescription>
-              Update the report configuration
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Configuration Name</Label>
-              <Input
-                value={formData.config_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, config_name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Template Configuration (JSON)</Label>
-              <Textarea
-                value={formData.template_config}
-                onChange={(e) => setFormData(prev => ({ ...prev, template_config: e.target.value }))}
-                className="font-mono text-sm"
-                rows={4}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Header Configuration (JSON)</Label>
-              <Textarea
-                value={formData.header_config}
-                onChange={(e) => setFormData(prev => ({ ...prev, header_config: e.target.value }))}
-                className="font-mono text-sm"
-                rows={4}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Field Mappings (JSON)</Label>
-              <Textarea
-                value={formData.field_mappings}
-                onChange={(e) => setFormData(prev => ({ ...prev, field_mappings: e.target.value }))}
-                className="font-mono text-sm"
-                rows={4}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(v) => setFormData(prev => ({ ...prev, is_active: v }))}
-              />
-              <Label>Active</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingConfig(null)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => editingConfig && handleUpdate(editingConfig)} 
-              disabled={updateConfig.isPending}
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
